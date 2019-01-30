@@ -1,0 +1,55 @@
+package com.contactsImprove.constant;
+
+public class UsersConst {
+	public static enum UsersType{
+		_0((byte)0,"普通用户"),
+		_1((byte)1,"商户"),
+		_2((byte)2,"币商");
+		public byte status;
+		public String meaning;
+		
+		UsersType(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte type) {			
+			UsersType[] typeList=UsersType.values();
+			for(UsersType t : typeList) {
+				if(t.status==type) {
+					return t.meaning;
+				}
+			}
+			
+			return "";			
+		}
+		
+	}
+	
+	public static enum UsersStatus{
+		_0((byte)0,"下线"),
+		_1((byte)1,"启用"),
+		_2((byte)2,"申请币商"),
+		_3((byte)3,"申请商户"),
+		shut((byte)4,"打烊");
+		public byte status;
+		public String meaning;
+		
+		UsersStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {			
+			UsersStatus[] statusList=UsersStatus.values();
+			for(UsersStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";			
+		}
+		
+	}
+}

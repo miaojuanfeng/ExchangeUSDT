@@ -1,0 +1,26 @@
+package com.contactsImprove.dao.api;
+
+import java.util.List;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.utils.PageUtil;
+
+public interface OrdersDao {
+	
+    int deleteByPrimaryKey(String tradeNumber);
+
+    int insert(Orders record);
+
+    int insertSelective(Orders record);
+
+    Orders selectByPrimaryKey(String tradeNumber);
+
+    int updateByPrimaryKeySelective(Orders record);
+    
+    Integer updateOrderTimeoutById(String orderIds);  
+    
+    List<Orders> refineTimeoutOrder(Integer timeOut);
+    
+    List<Orders> selectByOrderList(Orders record);
+    
+    List<Orders> selectPageByUserId(PageUtil pageUtil);    
+}

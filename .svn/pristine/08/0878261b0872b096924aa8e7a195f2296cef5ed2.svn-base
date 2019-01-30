@@ -1,0 +1,25 @@
+package com.contactsImprove.service.api;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.entity.api.UserWallet;
+
+public interface JournalAccountService {
+	
+    int deleteByPrimaryKey(Long journalAccountId);
+
+    int insert(JournalAccount record);
+
+    int insertSelective(JournalAccount record);
+
+    JournalAccount selectByPrimaryKey(Long journalAccountId);
+
+    int updateByPrimaryKeySelective(JournalAccount record);
+    
+    List<JournalAccount> selectByUserId(Long userId);
+    
+    int logAccountChange(UserWallet oldUw,UserWallet newUw,String remark,BigDecimal changeAmount);
+
+}

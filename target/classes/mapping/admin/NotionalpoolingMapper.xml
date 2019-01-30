@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.admin.NotionalpoolingDao">
+	<resultMap id="BaseResultMap" type="com.contactsImprove.entity.admin.Notionalpooling">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="sending_address" property="sendingAddress" jdbcType="VARCHAR" />
+		<result column="reference_address" property="referenceAddress" jdbcType="VARCHAR" />
+		<result column="amount" property="amount" jdbcType="DECIMAL" />
+		<result column="fee_id" property="feeId" jdbcType="INTEGER" />
+		<result column="status" property="status" jdbcType="INTEGER" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+	
+	<sql id="Base_Column_List">
+		id, sending_address, reference_address, amount, fee_id, status, create_time
+	</sql>
+	
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Integer">
+		select
+		<include refid="Base_Column_List" />
+		from
+			notionalpooling
+		where
+			id = #{id,jdbcType=INTEGER}
+	</select>
+	
+	<select id="selectListBystatus" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from
+			notionalpooling
+		where
+			status = 0
+	</select>
+	
+	<select id="selectCountByreFerenceAddress" resultType="java.math.BigDecimal"  parameterType="com.contactsImprove.entity.admin.Notionalpooling">
+		select sum(amount)
+		from
+			notionalpooling
+		where
+			reference_address = #{referenceAddress, jdbcType=VARCHAR}
+			and status = 0
+	</select>
+	
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete
+		from
+			notionalpooling
+		where
+			id = #{id,jdbcType=INTEGER}
+	</delete>
+	
+	<insert id="insertSelective" parameterType="com.contactsImprove.entity.admin.Notionalpooling">
+		insert into notionalpooling
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				id,
+			</if>
+			<if test="sendingAddress != null">
+				sending_address,
+			</if>
+			<if test="referenceAddress != null">
+				reference_address,
+			</if>
+			<if test="amount != null">
+				amount,
+			</if>
+			<if test="feeId != null">
+				fee_id,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<if test="createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=INTEGER},
+			</if>
+			<if test="sendingAddress != null">
+				#{sendingAddress,jdbcType=VARCHAR},
+			</if>
+			<if test="referenceAddress != null">
+				#{referenceAddress,jdbcType=VARCHAR},
+			</if>
+			<if test="amount != null">
+				#{amount,jdbcType=DECIMAL},
+			</if>
+			<if test="feeId != null">
+				#{feeId,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+		</trim>
+	</insert>
+	
+	<update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.admin.Notionalpooling">
+		update notionalpooling
+		<set>
+			<if test="sendingAddress != null">
+				sending_address = #{sendingAddress,jdbcType=VARCHAR},
+			</if>
+			<if test="referenceAddress != null">
+				reference_address = #{referenceAddress,jdbcType=VARCHAR},
+			</if>
+			<if test="amount != null">
+				amount = #{amount,jdbcType=DECIMAL},
+			</if>
+			<if test="feeId != null">
+				fee_id = #{feeId,jdbcType=INTEGER},
+			</if>
+			<if test="status != null">
+				status = #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime,jdbcType=TIMESTAMP},
+			</if>
+		</set>
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	
+	<update id="updateByreferenceAddress" parameterType="com.contactsImprove.entity.admin.Notionalpooling">
+		update notionalpooling
+		<set>
+			<if test="status != null">
+				status = #{status,jdbcType=INTEGER},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime,jdbcType=TIMESTAMP},
+			</if>
+		</set>
+		where reference_address = #{referenceAddress,jdbcType=VARCHAR}
+	</update>
+</mapper>

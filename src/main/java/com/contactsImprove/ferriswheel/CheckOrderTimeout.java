@@ -1,0 +1,129 @@
+package com.contactsImprove.ferriswheel;
+
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import com.contactsImprove.constant.MerchantOrderConst.NotifyStatus;
+import com.contactsImprove.constant.MerchantOrderConst.OrderType;
+import com.contactsImprove.constant.MerchantOrderConst.OrdersStatus;
+import com.contactsImprove.constant.PaymentRotateConst.PaymentRotateStatus;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.entity.api.MerchantNotify;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.entity.api.PaymentRotate;
+import com.contactsImprove.service.api.MerchantNotifyService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.PaymentRotateService;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.NotifyCommercial;
+
+
+public class CheckOrderTimeout {
+
+
+	private OrdersService ordersService;
+	private MerchantNotifyService merchantNotifyService;
+	private NotifyCommercial notifyCommercial;
+	PaymentRotateService paymentRotateService;
+	
+	private boolean hasStart=false;
+			
+	public CheckOrderTimeout(OrdersService ordersService,MerchantNotifyService merchantNotifyService,NotifyCommercial notifyCommercial,	PaymentRotateService paymentRotateService) {
+		this.ordersService=ordersService;	
+		this.merchantNotifyService=merchantNotifyService;
+		this.notifyCommercial=notifyCommercial;
+		this.paymentRotateService=paymentRotateService;
+	}
+
+	public void CheckOrder() {
+		if(!hasStart) {
+			hasStart=true;
+			CheckOrderThread cot =new CheckOrderThread();
+			cot.start();
+		}
+	}
+	
+	
+	private class CheckOrderThread extends Thread{	
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub			
+			List<Orders> list=ordersService.refineTimeoutOrder(SystemConst.Order_TimeOut);
+			List<String> withDraw=new ArrayList<String> ();
+			for(Orders od :list ) {
+				if(od.getType()!=null) {
+					if(od.getType()<OrderType._2.type) {						
+						int slotIndex=-1;
+						int secode=0;
+						if(od.getStatus()==OrdersStatus._0.status) {
+							secode=Math.abs((int)(((od.getCreateTime().getTime()+SystemConst.Order_TimeOut*1000)-System.currentTimeMillis())/1000));
+						}else if(od.getStatus()==OrdersStatus._1.status){
+							secode=Math.abs((int)(((od.getPaymentTime().getTime()+SystemConst.Order_TimeOut*1000)-System.currentTimeMillis())/1000));
+						}						
+						slotIndex=secode%Wheel.slot_max;
+						Wheel.pushSlot(od.getTradeNumber(), slotIndex);						
+					}else if(od.getType()==OrderType._2.type) {
+						withDraw.add(od.getTradeNumber());
+					}
+				}
+			}
+			list.clear();
+			list=null;		
+			if(withDraw.size()>0) {
+				NotifyOrderTimeout.getInstance().pustTimeout(withDraw);
+			}			
+			int slotIndex=DateTools.getSecondOfDay();
+			// 检查过去5分钟内没有激活的，先激活 。一般是tomcat重启导致 。
+			List<PaymentRotate> PaymentRotateList=paymentRotateService.selectByGreaterThanSlotIndex(slotIndex);					
+			if(PaymentRotateList!=null && PaymentRotateList.size()>0) {
+				List<PaymentRotate> rotateList=new ArrayList<PaymentRotate>();
+				for(int i=0;i<PaymentRotateList.size();i++) {
+					PaymentRotate pr=PaymentRotateList.get(i);
+					PaymentRotate payment=new PaymentRotate();
+					payment.setPaymentId(pr.getPaymentId());
+					if((pr.getPaymentNumber() !=null && pr.getPaymentNumber()>= pr.getLimitNumber()) ||
+						(pr.getPaymentVolume()!=null && pr.getPaymentVolume().compareTo(pr.getLimitVolume())>=0)) {
+						payment.setPaymentVolume(BigDecimal.ZERO);
+						payment.setPaymentNumber((short)0);
+					}
+					// 设置可接单
+					payment.setStatus(PaymentRotateStatus.valid.status);							
+					rotateList.add(payment);
+				}
+				if(rotateList!=null && rotateList.size()>0) {
+					paymentRotateService.updateBatchStatus(rotateList);
+				}
+				rotateList=null;
+			}
+			//检查一下有没回调过期的。有则先回调,已经过期的
+			List<MerchantNotify> notifyList=merchantNotifyService.selectByGreaterThanSlotIndex(slotIndex);
+			List<Orders> orderList=null;
+			for(int i=0;i<notifyList.size();i++) {
+				MerchantNotify mn=notifyList.get(i);
+				byte status=notifyCommercial.notifyOrderFinish(mn,mn.getPrivateKey());
+				if(status>NotifyStatus.notyet.status) {
+					if(orderList==null) {
+						orderList=new ArrayList<Orders>();
+					}
+					Orders order=new Orders();
+					order.setTradeNumber(mn.getTradeNumber());
+					order.setNotifyStatus(status);
+					if(status==NotifyStatus.success.status) {
+						order.setCloseTime(new Date());
+					}
+					orderList.add(order);
+				}
+			}
+			if(orderList!=null && orderList.size()>0) {
+				ordersService.updateBatchNotifyStatus(orderList);
+			}
+			notifyList=null;
+			
+			
+		}
+	}
+
+}

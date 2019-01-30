@@ -1,0 +1,32 @@
+package com.contactsImprove.service.api;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.utils.PageUtil;
+
+public interface UserWalletService {
+	
+    int deleteByPrimaryKey(Long walletId);
+
+    int insert(UserWallet record);
+
+    int insertSelective(UserWallet record);
+
+    UserWallet selectByPrimaryKey(Long walletId);
+
+    int updateByPrimaryKeySelective(UserWallet record);
+
+    UserWallet findByLock(Long UserId,String currencyType);
+    
+    UserWallet selectByType(Long UserId,String currencyType);
+         
+    List<UserWallet> selectUserWalletByCurrencyAmount(BigDecimal currencyAmount,Integer maxNumber);
+    
+    List<UserWallet> selectUserWalletByCurrencyAmountAndType(BigDecimal currencyAmount,Integer maxNumber,Byte paymentType);
+    
+    List<UserWallet> selectUserWallerList();
+
+}

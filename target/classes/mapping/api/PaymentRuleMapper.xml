@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.PaymentRuleDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.PaymentRule" >
+    <id column="payment_type" property="paymentType" jdbcType="TINYINT" />
+    <result column="limit_volume" property="limitVolume" jdbcType="DECIMAL" />
+    <result column="limit_number" property="limitNumber" jdbcType="SMALLINT" />
+    <result column="payment_name" property="paymentName" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="rotate_interval_max" property="rotateIntervalMax" jdbcType="INTEGER" />
+    <result column="rotate_interval_min" property="rotateIntervalMin" jdbcType="INTEGER" />
+    <result column="reserve" property="reserve" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    payment_type, limit_volume, limit_number, payment_name, create_time, rotate_interval_max, 
+    rotate_interval_min, reserve
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Byte" >
+    select 
+    <include refid="Base_Column_List" />
+    from payment_rule
+    where payment_type = #{paymentType,jdbcType=TINYINT}
+  </select>  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Byte" >
+    delete from payment_rule
+    where payment_type = #{paymentType,jdbcType=TINYINT}
+  </delete>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.PaymentRule" >
+    insert into payment_rule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="paymentType != null" >
+        payment_type,
+      </if>
+      <if test="limitVolume != null" >
+        limit_volume,
+      </if>
+      <if test="limitNumber != null" >
+        limit_number,
+      </if>
+      <if test="paymentName != null" >
+        payment_name,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="rotateIntervalMax != null" >
+        rotate_interval_max,
+      </if>
+      <if test="rotateIntervalMin != null" >
+        rotate_interval_min,
+      </if>
+      <if test="reserve != null" >
+        reserve,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="paymentType != null" >
+        #{paymentType,jdbcType=TINYINT},
+      </if>
+      <if test="limitVolume != null" >
+        #{limitVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="limitNumber != null" >
+        #{limitNumber,jdbcType=SMALLINT},
+      </if>
+      <if test="paymentName != null" >
+        #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="rotateIntervalMax != null" >
+        #{rotateIntervalMax,jdbcType=INTEGER},
+      </if>
+      <if test="rotateIntervalMin != null" >
+        #{rotateIntervalMin,jdbcType=INTEGER},
+      </if>
+      <if test="reserve != null" >
+        #{reserve,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.PaymentRule" >
+    update payment_rule
+    <set >
+      <if test="limitVolume != null" >
+        limit_volume = #{limitVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="limitNumber != null" >
+        limit_number = #{limitNumber,jdbcType=SMALLINT},
+      </if>
+      <if test="paymentName != null" >
+        payment_name = #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="rotateIntervalMax != null" >
+        rotate_interval_max = #{rotateIntervalMax,jdbcType=INTEGER},
+      </if>
+      <if test="rotateIntervalMin != null" >
+        rotate_interval_min = #{rotateIntervalMin,jdbcType=INTEGER},
+      </if>
+      <if test="reserve != null" >
+        reserve = #{reserve,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where payment_type = #{paymentType,jdbcType=TINYINT}
+  </update>
+</mapper>

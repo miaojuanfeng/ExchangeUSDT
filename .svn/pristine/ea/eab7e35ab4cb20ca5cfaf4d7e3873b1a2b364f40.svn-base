@@ -1,0 +1,192 @@
+layui.use(['table', 'laydate'], function() {
+	var table = layui.table,
+		$ = layui.$,
+		form = layui.form,
+		laydate = layui.laydate;
+	$(function() {
+		render();
+	});
+function render() {	
+	table.render({
+		elem : '#user',
+		height : 570,
+		url : '/ContactsImprove/admin/user/selectUserRate',
+		title : '商户数据表',
+		toolbar: true,
+		cols : [ [
+			{
+				checkbox : true,
+				fixed : true
+			},
+			{
+				field : 'walletId',
+				title : '钱包ID',
+				width : 40,
+				fixed : 'left'
+			},
+			{
+				field : 'userId',
+				title : '用户ID',
+				width : 140,
+				fixed : 'left'
+			},
+			{
+				field : 'userName',
+				title : '用户名',
+				width : 130
+			},
+			{
+				field : 'phoneNumber',
+				title : '手机号',
+				width : 120
+			},
+			{
+				field : 'type',
+				title : '用户类型',
+				width : 130,
+				templet : '<div>{{ FormatType(d.type)}}</div>'
+			},
+			{
+				field : 'currencyType',
+				title : '货币类型',
+				width : 130,
+			},
+			{
+				field : 'currencyNumber',
+				title : '可用数量',
+				width : 200,
+				templet : '<div>{{ FormatNumber(d.currencyNumber)}}</div>'
+			},
+			{
+				field : 'freezeNumber',
+				title : '冻结数量',
+				width : 213,
+				templet : '<div>{{ FormatNumber(d.freezeNumber)}}</div>'
+			},
+			{
+				field : 'inRate',
+				title : '入金费率',
+				width : 160,
+				templet : '<div>{{ FormatNumber(d.inRate)}}</div>'
+			},
+			{
+				field : 'outRate',
+				title : '出金费率',
+				width : 160,
+				templet : '<div>{{ FormatNumber(d.outRate)}}</div>'
+			},
+			{
+				fixed : 'right',
+				title : '操作',
+				width : 160,
+				align : 'center',
+				toolbar : '#barDemo'
+			}
+		] ],
+		id: 'seach_reload',
+		page : true
+	});
+}
+	table.on('tool(user)', function(obj) {
+		var data = obj.data, //获得当前行数据
+			layEvent = obj.event; //获得 lay-event 对应的值
+		
+		if (layEvent === 'edit') { //修改操作
+			$("#walletId").val(data.walletId);
+			$("#userName").val(data.userName);
+			$("#phoneNumber").val(data.phoneNumber);
+			$("#inRate").val("");
+			$("#outRate").val("");
+			layer.open({
+				type : 1,
+				area : [ '480px', '360px' ],
+				shade : [ 0.5, '#393D49' ],
+				title : "编辑",
+				content : $("#moneyusers_example"),
+				btn : [ '确定', '取消' ],
+				scrollbar : false,
+				resize : true,
+				maxmin: true,
+				yes : function(index, layero) {
+					$.ajax({
+						url : "/ContactsImprove//admin/user/udpateUserRate",
+						type : "post",
+						data : $("#moneyusers_example").serialize(),
+						dateType : 'json',
+						success : function success(resp) {
+							layer.msg("修改" + resp.msg);
+							layer.close(index);
+							render();
+						}
+					});
+				}
+			});
+		}
+	});
+	
+	var active = {
+		reload : function() {
+			table.reload('seach_reload', {
+				page : {
+					curr : 1 //重新从第 1 页开始
+				},
+				where : {
+					userName : $('#seach_userName').val(),
+					phoneNumber : $('#seach_phone').val(),
+					status : $('#seach_status').val(),
+					createTime : $('#seach_createTime').val()
+				}
+			});
+		}
+	};
+
+	$('.layui-seach .layui-btn').on('click', function() {
+		var type = $(this).data('type');
+		active[type] ? active[type].call(this) : '';
+	});
+
+	laydate.render({
+		elem : '#seach_createTime',
+	});
+	
+	form.on('checkbox(status)', function(obj) {
+		$.ajax({
+			url : "/ContactsImprove/admin/user/updateUser",
+			type : "post",
+			data : {
+				'userId' : this.value,
+				'status' : obj.elem.checked == true ? 0 : 1,
+			},
+			dateType : 'json',
+			success : function success(data) {
+				if (obj.elem.checked == true) {
+					layer.msg("锁定" + data.msg);
+				} else {
+					layer.msg("解锁" + data.msg);
+				}
+			}
+		});
+	});
+});
+
+function FormatType(str) {
+	if (str != null) {
+		if (str == 0) {
+			return "普通用户";
+		} else if (str == 1) {
+			return "商户";
+		} else if (str == 2) {
+			return "币商";
+		}
+	} else {
+		return "";
+	}
+}
+
+function FormatNumber(str) {
+	if(str != null) {
+		return str;
+	} else {
+		return "";
+	}
+}

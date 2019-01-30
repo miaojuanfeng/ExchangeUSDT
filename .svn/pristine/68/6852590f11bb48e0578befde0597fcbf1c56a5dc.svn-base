@@ -1,0 +1,154 @@
+package com.contactsImprove.constant;
+
+import com.contactsImprove.utils.StringUtil;
+
+public class MerchantOrderConst {
+	
+	public static enum OrdersStatus{
+		_0((byte)0,"未付款"),
+		_1((byte)1,"已付款"),
+		_2((byte)2,"已完成"),
+		_3((byte)3,"已取消"),
+		_4((byte)4,"失败"),
+		_5((byte)5,"申述中");
+		
+		public byte status;
+		public String meaning;
+		
+		OrdersStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			OrdersStatus[] statusList=OrdersStatus.values();
+			for(OrdersStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";			
+		}
+
+	}
+	
+	public static enum OrderType{
+		_0((byte)0,"充币"),
+		_1((byte)1,"提币");
+		
+		public byte type;
+		public String meaning;
+		
+		OrderType(byte type,String meaning){
+			this.type=type;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByType(byte type) {
+			
+			OrderType[] statusList=OrderType.values();
+			for(OrderType s : statusList) {
+				if(s.type==type) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}
+
+	}
+	
+	public static enum NotifyStatus{
+		_0((byte)0,"进行中"),
+		_1((byte)1,"成功"),
+		_2((byte)2,"失败");
+		
+		public byte status;
+		public String meaning;
+		
+		NotifyStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			NotifyStatus[] statusList=NotifyStatus.values();
+			for(NotifyStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";
+			
+		}
+
+	}
+	
+	public static enum TradeStatus{
+		fail((byte)0,"TRADE_FAIL"),
+		success((byte)1,"TRADE_SUCCESS");
+		
+		public byte status;
+		public String meaning;
+		
+		TradeStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			TradeStatus[] statusList=TradeStatus.values();
+			for(TradeStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";
+			
+		}
+
+	}
+	
+	public static enum Payment{
+		alipay((byte)1,"ALIPAY","支付宝支付"),
+		weipay((byte)2,"WEIPAY","微信支付"),		
+		union_pay((byte)3,"UNIONPAY","银联支付");
+		
+		public byte type;
+		public String code;
+		public String meaning;
+		
+		Payment(byte type,String code ,String meaning){
+			this.type=type;
+			this.code=code;
+			this.meaning=meaning;
+		}
+
+		public static String getMeaningByType(byte type) {			
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.type==type) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}
+
+		public static byte getTypeByCode(String code) {	
+			if(StringUtil.isBlank(code)) return  (byte)0;	
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.code.equals(code)) {
+					return s.type;
+				}
+			}			
+			return (byte)0;			
+		}
+	}
+
+}

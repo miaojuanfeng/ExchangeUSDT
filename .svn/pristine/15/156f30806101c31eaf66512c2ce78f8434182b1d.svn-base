@@ -1,0 +1,45 @@
+package com.contactsImprove.shiro;
+
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.contactsImprove.entity.admin.AdminUser;
+import com.contactsImprove.service.admin.AdminUserService;
+
+public class ShiroReaml extends AuthorizingRealm {
+
+	@Autowired
+	private AdminUserService adminUserService;
+
+	@Override
+	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection pc) {
+		return null;
+	}
+
+	@Override
+	protected AuthenticationInfo doGetAuthenticationInfo(
+			AuthenticationToken authenticationToken)
+			throws AuthenticationException {
+
+		UsernamePasswordToken token = (UsernamePasswordToken) authenticationToken;
+		AdminUser adminUser = new AdminUser();
+		adminUser.setUserName(token.getUsername());
+		AdminUser user = adminUserService.selectByUserName(adminUser);
+		if (user == null) {
+			throw new UnknownAccountException();
+		} else if(user.getIsValid() == 0) {
+			throw new AuthenticationException();
+		}
+
+		SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(
+				user , user.getPassword(), this.getName());
+		return authenticationInfo;
+	}
+}

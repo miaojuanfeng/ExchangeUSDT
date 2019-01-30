@@ -1,0 +1,29 @@
+package com.contactsImprove.service.api;
+
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
+
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.utils.PageUtil;
+
+public interface JournalAccountService {
+	
+    int deleteByPrimaryKey(Long journalAccountId);
+
+    int insertSelective(JournalAccount record);
+
+    JournalAccount selectByPrimaryKey(Long journalAccountId);
+
+    int updateByPrimaryKeySelective(JournalAccount record);
+    
+    List<JournalAccount> selectByUserId(Long userId,PageUtil pu);
+    
+    JournalAccount logAccountChange(UserWallet oldUw, UserWallet newUw, String remark,BigDecimal changeAmount,Byte type,Byte currencyType,String tradeNumber); 
+    
+    List<JournalAccount> selectByPage(PageUtil pu,String phoneNumber,String type,String createTime);
+    
+    int insertBatch(Collection<JournalAccount> list);
+
+}

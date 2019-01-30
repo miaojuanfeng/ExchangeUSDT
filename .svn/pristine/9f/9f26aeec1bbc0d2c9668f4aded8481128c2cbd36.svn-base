@@ -1,0 +1,231 @@
+package com.contactsImprove.constant;
+
+import com.contactsImprove.utils.StringUtil;
+
+public class MerchantOrderConst {
+		
+	public static enum ComplainOrderStatus{
+		
+		_1((byte)1,"申诉中"),
+		_2((byte)2,"取消申诉"),
+		_3((byte)3,"申诉失败"),
+		_4((byte)4,"申诉成功");
+		
+		public byte status;
+		public String meaning;
+		
+		ComplainOrderStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			ComplainOrderStatus[] statusList=ComplainOrderStatus.values();
+			for(ComplainOrderStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";			
+		}
+
+	}
+	
+	public static enum OrdersStatus{
+		_0((byte)0,"未付款"),
+		_1((byte)1,"已付款"),
+		_2((byte)2,"已完成"),
+		_3((byte)3,"已取消"),
+		_4((byte)4,"失败"),
+		_5((byte)5,"申述中");
+		
+		public byte status;
+		public String meaning;
+		
+		OrdersStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			OrdersStatus[] statusList=OrdersStatus.values();
+			for(OrdersStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";			
+		}
+
+	}
+	
+	public static enum OrderType{
+		_0((byte)0,"入金"),
+		_1((byte)1,"提币"),
+		_2((byte)2,"出金"),
+		_3((byte)3,"充币");
+		
+		public byte type;
+		public String meaning;
+		
+		OrderType(byte type,String meaning){
+			this.type=type;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByType(byte type) {
+			
+			OrderType[] statusList=OrderType.values();
+			for(OrderType s : statusList) {
+				if(s.type==type) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}
+
+	}
+	
+	public static enum DealType{
+		normal((byte)0,"正常交易"),
+		supply((byte)1,"补单交易");
+
+		public byte type;
+		public String meaning;
+		
+		DealType(byte type,String meaning){
+			this.type=type;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByType(byte type) {			
+			DealType[] statusList=DealType.values();
+			for(DealType s : statusList) {
+				if(s.type==type) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}
+
+	}
+	
+	public static enum NotifyStatus{
+		inhand((byte)0,"进行中"),
+		success((byte)1,"成功"),
+		fail((byte)2,"失败"),
+		notNofity((byte)3,"无需回调"),
+		notyet((byte)-1,"尚未回调");
+		public byte status;
+		public String meaning;
+		
+		NotifyStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			NotifyStatus[] statusList=NotifyStatus.values();
+			for(NotifyStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";
+			
+		}
+
+	}
+	
+	public static enum TradeStatus{
+		fail((byte)0,"TRADE_FAIL"),
+		success((byte)1,"TRADE_SUCCESS");
+		
+		public byte status;
+		public String meaning;
+		
+		TradeStatus(byte status,String meaning){
+			this.status=status;
+			this.meaning=meaning;
+		}
+		
+		public static String getMeaningByStatus(byte status) {
+			
+			TradeStatus[] statusList=TradeStatus.values();
+			for(TradeStatus s : statusList) {
+				if(s.status==status) {
+					return s.meaning;
+				}
+			}
+			
+			return "";
+			
+		}
+
+	}
+	
+	public static enum Payment{
+		alipay((byte)1,"ALIPAY","支付宝支付"),
+		weipay((byte)2,"WEIPAY","微信支付"),		
+		union_pay((byte)3,"UNIONPAY","银联支付");
+		
+		public byte type;
+		public String code;
+		public String meaning;
+		
+		Payment(byte type,String code ,String meaning){
+			this.type=type;
+			this.code=code;
+			this.meaning=meaning;
+		}
+
+		public static String getMeaningByType(byte type) {			
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.type==type) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}
+		
+		public static String getMeaningByCode(String code) {			
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.code.equals(code)) {
+					return s.meaning;
+				}
+			}			
+			return "";			
+		}		
+
+		public static byte getTypeByCode(String code) {	
+			if(StringUtil.isBlank(code)) return  (byte)0;	
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.code.equals(code)) {
+					return s.type;
+				}
+			}			
+			return (byte)0;			
+		}
+		
+		public static String getCodeByMeaning(String meaning){
+			if(StringUtil.isBlank(meaning)) return  null;	
+			Payment[] statusList=Payment.values();
+			for(Payment s : statusList) {
+				if(s.meaning.equals(meaning)) {
+					return s.code;
+				}
+			}
+			return null;			
+		}
+	}
+
+}

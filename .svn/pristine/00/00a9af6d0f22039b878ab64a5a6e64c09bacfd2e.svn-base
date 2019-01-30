@@ -1,0 +1,37 @@
+layui.use('layer', function() {
+	var table = layui.table,
+		$ = layui.$,
+		layer = layui.layer;
+	
+	$('#login').on('click', function() {
+		
+		if($('#userName').val() == null || $('#userName').val() == "") {
+			layer.msg("请输入邮箱号");
+			return;
+		}
+		
+		if($('#password').val() == null || $('#password').val() == "") {
+			layer.msg("请输入密码");
+			return;
+		}
+		
+		$.ajax({
+			url : "/ContactsImprove/admin/login/login",
+			type : "post",
+			data : {
+				userName : $('#userName').val(),
+				password : $('#password').val()
+			},
+			dateType : 'json',
+			success : function success(data) {
+				layer.msg("登入"+data.msg, {
+					time : 1000 //1秒关闭（如果不配置，默认是3秒）
+				}, function() {
+					if(data.code == 200) {
+						location.href = "/ContactsImprove/admin/login/index";
+					}
+				});
+			}
+		});
+	});
+});

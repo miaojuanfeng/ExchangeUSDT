@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="../../css/frame/layui/css/layui.css">
+	<style type="text/css">
+		body{padding: 0px 10px;}
+	</style>
+	<script src="../../scripts/frame/layui/layui.js" charset="utf-8"></script>
+	<script src="../../scripts/page/order.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="layui-seach">
+		<div class="layui-form-item">
+			<div style="width: 100%;height: auto;display: -webkit-inline-box;">
+				<label class="layui-form-label">交易流水号</label>
+				<div class="layui-input-inline">
+					<input type="text" id="seach_tradeNumber" name="seach_tradeNumber"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">商户订单号</label>
+				<div class="layui-input-inline">
+					<input type="text" id="seach_outTradeNo" name="seach_outTradeNo"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">支付方式</label>
+				<div class="layui-input-inline">
+					<select id="seach_paymentId" name="seach_paymentId"
+						class="layui-input layui-unselect">
+						<option value="">选择支付方式</option>
+						<option value="1">支付宝</option>
+						<option value="2">微信</option>
+						<option value="3">银联</option>
+					</select>
+				</div>
+				<label class="layui-form-label">支付状态</label>
+				<div class="layui-input-inline">
+					<select id="seach_status" name="seach_status"
+						class="layui-input layui-unselect">
+						<option value="">选择支付状态</option>
+						<option value="0">未付款</option>
+						<option value="1">已付款</option>
+						<option value="2">已完成</option>
+						<option value="3">已取消</option>
+						<option value="4">申述中</option>
+					</select>
+				</div>
+				<label class="layui-form-label">回调状态</label>
+				<div class="layui-input-inline">
+					<select id="seach_notifyStatus" name="seach_notifyStatus"
+						class="layui-input layui-unselect">
+						<option value="">选择回调状态</option>
+						<option value="0">回调中</option>
+						<option value="1">回调成功</option>
+						<option value="2">回调失败</option>
+					</select>
+				</div>
+			</div>
+			<div style="padding-top: 10px;width: 100%;height: auto;">
+				<label class="layui-form-label">创建时间</label>
+				<div class="layui-input-inline">
+					<input type="text" name="seach_createTime" id="seach_createTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">支付时间</label>
+				<div class="layui-input-inline">
+					<input type="text" name="seach_paymentTime" id="seach_paymentTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">完成时间</label>
+				<div class="layui-input-inline">
+					<input type="text" name="seach_closeTime" id="seach_closeTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-input-inline">
+				<button class="layui-btn layui-btn-primary layui-btn-sm"
+					data-type="reload">
+					<i class="layui-icon">&#xe615;</i>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<table class="layui-hide" id="order" lay-filter="order"></table>
+</body>
+</html>	

@@ -1,0 +1,218 @@
+
+
+USE `ContactsImprove`;
+DROP procedure IF EXISTS `refineTimeoutOrder`;
+
+DELIMITER $$
+USE `ContactsImprove`$$
+
+CREATE PROCEDURE refineTimeoutOrder(timeOut int)
+BEGIN
+
+    declare tradeNumber varchar(28);
+    declare createTime datetime default null;
+    declare currentTime datetime;
+		declare t_error INTEGER DEFAULT 0;  	
+    declare next_cur CURSOR FOR SELECT od.trade_number,od.create_time FROM orders od where od.order_status=0 ;    
+		DECLARE CONTINUE HANDLER FOR NOT FOUND SET tradeNumber=null, createTime=null;
+		DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_error=1; 
+    DROP TABLE IF EXISTS outTimeOrder;    
+		DROP TABLE IF EXISTS notTimeOutOrder;      
+    CREATE TEMPORARY TABLE outTimeOrder(id VARCHAR(28));  
+    CREATE TEMPORARY TABLE notTimeOutOrder(trade_number VARCHAR(28),create_time datetime); 
+      
+    set currentTime=NOW();
+		OPEN next_cur;
+    FETCH next_cur INTO tradeNumber,createTime ;    
+    while tradeNumber is not null && tradeNumber!='' do    
+			if TIMESTAMPDIFF(second,createTime,currentTime)>timeOut then				
+							insert into outTimeOrder(id)  values(tradeNumber);   							
+			else         					 
+							insert into notTimeOutOrder(trade_number , create_time) values(tradeNumber,createTime);							
+			end if;					
+							FETCH next_cur INTO tradeNumber,createTime;            
+    end while ;    
+    close next_cur;
+      
+    START TRANSACTION;  
+    
+		update orders o,outTimeOrder oid,user_wallet uw set o.status=3 ,uw.currency_number=uw.currency_number+o.currency_amount,uw.freeze_number=uw.freeze_number-o.currency_amount where oid.id=o.trade_number and uw.user_id=o.user_id;
+    
+		truncate outTimeOrder;
+        
+	IF t_error = 1 THEN  
+             ROLLBACK;
+	ELSE  
+             COMMIT;
+	END IF;
+     
+    select * from notTimeOutOrder;
+
+    DROP TABLE IF EXISTS outTimeOrder;    
+		DROP TABLE IF EXISTS notTimeOutOrder;
+
+
+
+END$$
+
+DELIMITER ;
+
+
+
+
+
+USE `ContactsImprove`;
+DROP procedure IF EXISTS `selectByPage`;
+
+DELIMITER $$
+USE `ContactsImprove`$$
+
+CREATE PROCEDURE selectByPage(queryStr varchar(8000),pageNumber int,pageSize int,out pageTotal int)
+BEGIN
+
+   DECLARE vstrSql VARCHAR(8000) DEFAULT '';     
+    declare totalPage int;
+		if instr(queryStr,'#')=0 && instr(queryStr,';')=0 then
+
+			set vstrSql=concat('select count(*) into @countNum from(',queryStr,') as a;');    
+			set @vSql=vstrSql;
+			
+			PREPARE stmt  FROM @vSql;    
+			EXECUTE stmt ;
+			DEALLOCATE PREPARE  stmt;
+			
+			set totalPage=TRUNCATE((@countNum+pageSize-1)/pageSize,0); 
+			
+			set pageTotal=@countNum;
+			
+			if pageNumber>0 && pageNumber<=totalPage then
+					
+				set vstrSql=concat(queryStr,' limit ',(pageNumber-1)*pageSize,',',pageSize);    
+				
+				set @resultSql=vstrSql;
+				
+				PREPARE stmt  FROM @resultSql;    
+				EXECUTE stmt ;
+				DEALLOCATE PREPARE  stmt;
+			end if;
+    end if;
+
+
+
+END$$
+
+DELIMITER ;
+
+
+
+
+USE `ContactsImprove`;
+DROP procedure IF EXISTS `selectResourcesBypower`;
+
+DELIMITER $$
+USE `ContactsImprove`$$
+
+CREATE PROCEDURE selectResourcesBypower(userId INT)
+BEGIN
+
+   	declare powerId, roleId INT;
+		
+    SELECT power_id INTO powerId FROM admin_user WHERE id = userId AND is_valid = 1;
+		
+		SELECT role_id INTO roleId FROM power_role_detail WHERE power_id = powerId;
+
+		SELECT r.* FROM role_resource_detail o, resources_url r WHERE o.resources_id = r.id AND o.role_id = roleId;
+
+
+
+
+END$$
+
+DELIMITER ;
+
+
+
+
+USE `ContactsImprove`;
+DROP procedure IF EXISTS `timeoutOrder`;
+
+DELIMITER $$
+USE `ContactsImprove`$$
+
+CREATE PROCEDURE timeoutOrder(orderIds varchar(8000))
+BEGIN
+
+   	declare curIndex  INT;
+	declare separators varchar(2) default ',';
+  declare curId varchar(20);
+	declare t_error INTEGER DEFAULT 0;  	
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_error=1; 
+	DROP TABLE IF EXISTS orderId;    
+	CREATE TEMPORARY TABLE orderId(id varchar(30));
+     
+  set curIndex=INSTR(orderIds,separators);    
+	while curIndex>0 do
+		set curId=left(orderIds, curIndex-1);
+		insert into orderId(id) values(curId);        
+		set orderIds=substring(orderIds,curIndex+1,length(orderIds)-curIndex);        
+		set curIndex=INSTR(orderIds,separators);				
+	end while;
+  insert into orderId(id) values(orderIds);
+        
+  START TRANSACTION;  
+    
+	update orders o,orderId oid,user_wallet uw set o.status=3 ,uw.currency_number=uw.currency_number+o.currency_amount,uw.freeze_number=uw.freeze_number-o.currency_amount where oid.id=o.trade_number and uw.user_id=o.user_id;
+        
+	IF t_error = 1 THEN
+             ROLLBACK;
+             select -1;
+
+	ELSE  
+             COMMIT;
+             select 1;
+	END IF;
+            
+	DROP TABLE IF EXISTS orderId;  
+
+
+END$$
+
+DELIMITER ;
+
+
+
+
+
+USE `ContactsImprove`;
+DROP procedure IF EXISTS `setPaymentDefault`;
+
+DELIMITER $$
+USE `ContactsImprove`$$
+
+CREATE PROCEDURE setPaymentDefault(paymentId LONG,userId long)
+BEGIN
+	declare t_error INTEGER DEFAULT 0;  	
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_error=1; 
+
+ START TRANSACTION;  
+	update payment_mode set payment_default=0 where user_id=userId and payment_id!=paymentId;
+	
+	update payment_mode set payment_default=1 where  payment_id=paymentId;
+
+	IF t_error = 1 THEN
+             ROLLBACK;
+             select -1;
+
+	ELSE  
+             COMMIT;
+             select 1;
+	END IF;
+
+END$$
+
+DELIMITER ;
+
+
+
+
+

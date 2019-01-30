@@ -1,0 +1,105 @@
+layui.use('table', function() {
+	var table = layui.table,
+		form = layui.form,
+		$ = layui.$;
+	
+	$(function() {
+		render();
+	});
+	
+	function render() {
+		table.render({
+			elem : '#user',
+			height : 570,
+			url : '/ContactsImprove/admin/user/examineUser',
+			where : {
+				status: 2
+			},
+			title : '用户数据表',
+			toolbar: true,
+			cols : [ [
+				{
+					checkbox : true,
+					fixed : true
+				},
+				{
+					field : 'userId',
+					title : 'ID',
+					width : 180,
+					fixed : 'left'
+				},
+				{
+					field : 'userName',
+					title : '用户名',
+					width : 130
+				},
+				{
+					field : 'phoneNumber',
+					title : '手机号',
+					width : 120
+				},
+				{
+					field : 'status',
+					title : '状态',
+					width : 115,
+					templet: '#switchTpl', unresize: true
+				},
+			] ],
+			id: 'seach_reload',
+			page : true,
+		});
+	}
+
+	var active = {
+		reload : function() {
+			table.reload('seach_reload', {
+				page : {
+					curr : 1 //重新从第 1 页开始
+				},
+				where : {
+					userName : $('#seach_userName').val(),
+					phoneNumber : $('#seach_phone').val(),
+				}
+			});
+		}
+	};
+
+	$('.layui-seach .layui-btn').on('click', function() {
+		var type = $(this).data('type');
+		active[type] ? active[type].call(this) : '';
+	});
+	
+	form.on('checkbox(status)', function(obj) {
+		$.ajax({
+			url : "/ContactsImprove/admin/user/updateUser",
+			type : "post",
+			data : {
+				'userId' : this.value,
+				'status' : obj.elem.checked == true ? 1 : 2,
+			},
+			dateType : 'json',
+			success : function success(data) {
+				layer.msg("审核" + data.msg);
+				render();
+			}
+		});
+	});
+});
+
+function FormatCurrencyNumber(str) {
+	if(str != null) {
+		return str.currencyNumber;
+	}
+}
+
+function FormatFreezeNumber(str) {
+	if(str != null) {
+		return str.freezeNumber;
+	}
+}
+
+function FormatWalletAddress(str) {
+	if(str != null) {
+		return str.walletAddress;
+	}
+}

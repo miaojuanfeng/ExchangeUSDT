@@ -1,0 +1,140 @@
+package com.contactsImprove.service.api.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.contactsImprove.dao.api.OrdersDao;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.utils.PageUtil;
+
+@Service("ordersService")
+public class OrdersServiceImpl implements OrdersService {
+	
+	@Autowired
+	OrdersDao ordersDao;
+
+	@Override
+	public int deleteByPrimaryKey(String tradeNumber) {
+		// TODO Auto-generated method stub
+		return ordersDao.deleteByPrimaryKey(tradeNumber);
+	}
+
+	@Override
+	public int insert(Orders record) {
+		// TODO Auto-generated method stub
+		return ordersDao.insert(record);
+	}
+
+	@Override
+	public int insertSelective(Orders record) {
+		// TODO Auto-generated method stub
+		return ordersDao.insertSelective(record);
+	}
+
+	@Override
+	public Orders selectByPrimaryKey(String tradeNumber) {
+		// TODO Auto-generated method stub
+		return ordersDao.selectByPrimaryKey(tradeNumber);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(Orders record) {
+		// TODO Auto-generated method stub
+		return ordersDao.updateByPrimaryKeySelective(record);
+	}
+
+	@Override
+	public Integer updateOrderTimeoutById(String orderIds) {
+		// TODO Auto-generated method stub
+		return ordersDao.updateOrderTimeoutById(orderIds);
+	}
+
+	@Override
+	public List<Orders> refineTimeoutOrder(Integer timeOut) {
+		// TODO Auto-generated method stub
+		return ordersDao.refineTimeoutOrder(timeOut);
+	}
+
+	@Override
+	public List<Orders> selectPageByMerchantUserId(Byte status,Long merchantUserId, PageUtil pageUtil) {
+		StringBuilder sb=new StringBuilder();
+		
+		sb.append("select   trade_number, out_trade_no, merchant_user_id, user_id, merchant_account, payment_id," + 
+				"    payment_type_name, payment_number, currency_type, currency_amount, exchange_rate, " + 
+				"    amount, type,from_address,to_address, status, create_time, payment_time, close_time, version, subject, " + 
+				"    body from orders where merchant_user_id="+merchantUserId);
+		if(status!=null) {
+			sb.append(" and status="+status);
+		}
+		sb.append(" order by create_time desc");
+		
+		pageUtil.setQueryStr(sb.toString());
+					
+		return ordersDao.selectPageByUserId(pageUtil);
+	}
+
+	@Override
+	public List<Orders> selectPageBytUserId(Byte status,Long userId, PageUtil pageUtil) {
+		StringBuilder sb=new StringBuilder();
+		
+		sb.append("select  trade_number, out_trade_no, merchant_user_id, user_id, merchant_account, payment_id," + 
+				"    payment_type_name, payment_number, currency_type, currency_amount, exchange_rate, " + 
+				"    amount, type,from_address,to_address, status, create_time, payment_time, close_time, version, subject, " + 
+				"    body from orders where user_id="+userId);		
+		if(status!=null) {
+			sb.append(" and status="+status);
+		}
+		sb.append(" order by create_time desc");
+		pageUtil.setQueryStr(sb.toString());
+		
+		return ordersDao.selectPageByUserId(pageUtil);
+
+	}
+	
+	@Override
+	public List<Orders> selectByOrderList(Orders record) {
+		StringBuffer queryStr = new StringBuffer("select * from orders where merchant_user_id != 0");
+		
+		if(record.getTradeNumber() != null && record.getTradeNumber() != "") {
+			queryStr.append(" and trade_number = " +record.getTradeNumber());
+		}
+		
+		if(record.getOutTradeNo() != null && record.getOutTradeNo() != "") {
+			queryStr.append(" and out_trade_no = " +record.getOutTradeNo());	
+		}
+		
+		if(record.getPaymentId() != null) {
+			queryStr.append(" and payment_id = " +record.getPaymentId());	
+		}
+		
+		if(record.getStatus() != null) {
+			queryStr.append(" and status = " +record.getStatus());	
+		}
+		
+		if(record.getNotifyStatus() != null) {
+			queryStr.append(" and notify_status = " +record.getNotifyStatus());	
+		}
+		
+		if(record.getCreateTime() != null) {
+			String createTime = new SimpleDateFormat("yyyy-MM-dd").format(record.getCreateTime());
+			queryStr.append(" and notify_status create_time "+ "'%"+createTime+"%'");	
+		}
+		
+		if(record.getPaymentTime() != null) {
+			String paymentTime = new SimpleDateFormat("yyyy-MM-dd").format(record.getPaymentTime());
+			queryStr.append(" and payment_time like "+ "'%"+paymentTime+"%'");	
+		}
+		
+		if(record.getCloseTime() != null) {
+			String closeTime = new SimpleDateFormat("yyyy-MM-dd").format(record.getCloseTime());
+			queryStr.append(" and close_time like "+ "'%"+closeTime+"%'");	
+		}
+		record.setQueryStr(queryStr.toString());
+		return ordersDao.selectByOrderList(record);
+	}
+
+}

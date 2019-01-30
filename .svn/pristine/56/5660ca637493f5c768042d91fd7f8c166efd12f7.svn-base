@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="../../css/frame/layui/css/layui.css">
+	<style type="text/css">
+		body{padding: 0px 10px;}
+		.hide{display:none}
+	</style>
+	<script src="../../scripts/frame/layui/layui.js" charset="utf-8"></script>
+	<script src="../../scripts/page/bankmark.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="layui-btn-container" style="padding-top: 10px;">
+		<button class="layui-btn" id="add">新增</button>
+	</div>	
+	<script type="text/html" id="barDemo">
+		<a class="layui-btn layui-btn-danger" lay-event="edit">设置简写</a>
+	</script>
+	<table class="layui-hide" id="bankmark" lay-filter="bankmark"></table>	
+	
+	<form class="layui-form" action="" id="bankmark_example" hidden="hidden">
+		<input hidden="hidden" name="id" id="id">
+		<div style="padding: 10px 10px;">
+			<div class="layui-form-item">
+				<label class="layui-form-label">银行名称</label>
+				<div class="layui-input-inline">
+					<input type="text" id="bankName" name="bankName" lay-verify="required|bankName" autocomplete="off" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">英文简写</label>
+				<div class="layui-input-inline">
+					<input type="text" id="bankMark" name="bankMark" lay-verify="required|bankMark" autocomplete="off" class="layui-input">
+				</div>
+			</div>			
+		</div>
+	</form>
+</body>
+</html>

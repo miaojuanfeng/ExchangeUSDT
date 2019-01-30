@@ -1,0 +1,146 @@
+package com.contactsImprove.service.api.impl;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.contactsImprove.dao.api.UsersDao;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.service.api.UsersService;
+
+@Service
+public class UsersServiceImpl implements UsersService{
+
+	@Autowired
+	private UsersDao usersDao;
+
+	@Override
+	public Users selectByPhoneNumber(String phoneNumber) {
+		// TODO Auto-generated method stub
+		return usersDao.selectByPhoneNumber(phoneNumber);
+	}
+
+	@Override
+	public int insertSelective(Users record) {
+		// TODO Auto-generated method stub
+		return usersDao.insertSelective(record);
+	}
+
+	@Override
+	public Users selectByPrimaryKey(Long userId) {
+		// TODO Auto-generated method stub
+		return usersDao.selectByPrimaryKey(userId);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(Users record) {
+		// TODO Auto-generated method stub
+		return usersDao.updateByPrimaryKeySelective(record);
+	}
+	
+	@Override
+	public List<Users> selectUsersByMerchantList(Users record) {
+		StringBuffer queryStr = new StringBuffer("SELECT u.*, m.private_key, m.public_key, w.currency_number, w.freeze_number, w.wallet_address FROM users u, user_merchant m, user_wallet w WHERE type = 1 AND u.status = 1 AND u.user_id = m.user_id AND u.user_id = w.user_id");
+		
+		if(record.getUserName() != null && record.getUserName() != "") {
+			queryStr.append(" and user_name like" + "'%"+record.getUserName()+"%'");
+		} 
+		
+		if(record.getPhoneNumber() != null && record.getPhoneNumber() != "") {
+			queryStr.append(" and phone_number like" + "'%"+record.getPhoneNumber()+"%'");
+		} 
+		
+		if(record.getStatus() != null) {
+			queryStr.append(" and u.status =" + record.getStatus());
+		}
+		
+		if(record.getUserMerchant().getCreateTime() != null) {
+			String dateTime = new SimpleDateFormat("yyyy-MM-dd").format(record.getUserMerchant().getCreateTime());
+			queryStr.append(" and m.create_time like" + "'%"+ dateTime +"%'");
+		} 
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectUsersByType(Users record) {
+		StringBuffer queryStr = new StringBuffer("SELECT u.*,  w.currency_number, w.freeze_number, w.wallet_address FROM users u, user_wallet w WHERE type = "+record.getType()+" AND u.user_id = w.user_id");
+		
+		if(record.getUserName() != null && record.getUserName() != "") {
+			queryStr.append(" and user_name like" + "'%"+record.getUserName()+"%'");
+		} 
+		
+		if(record.getPhoneNumber() != null && record.getPhoneNumber() != "") {
+			queryStr.append(" and phone_number like" + "'%"+record.getPhoneNumber()+"%'");
+		} 
+		
+		if(record.getStatus() != null) {
+			queryStr.append(" and u.status = " +record.getStatus());
+		}
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectUsersByStatus(Users record) {
+		StringBuffer queryStr = new StringBuffer("SELECT * FROM users WHERE status = "+record.getStatus());
+		
+		if(record.getUserName() != null && record.getUserName() != "") {
+			queryStr.append(" and user_name like" + "'%"+record.getUserName()+"%'");
+		} 
+		
+		if(record.getPhoneNumber() != null && record.getPhoneNumber() != "") {
+			queryStr.append(" and phone_number like" + "'%"+record.getPhoneNumber()+"%'");
+		} 
+		
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectWaitByUsdt(BigDecimal amount, Integer maxNumber, Byte paymentType, int hour) {			
+		StringBuilder sb=new StringBuilder();		
+		sb.append("select DISTINCT u.user_id from users u where u.type=2 and u.status=1 and u.role=0");		
+		sb.append(" and u.work_hours & "+hour+"<>0"); 
+	    sb.append(" and u.available_credit>="+amount);			
+	    sb.append(" order by available_credit desc");	 		    
+	    sb.append(" LIMIT "+maxNumber);	
+	    if(sb.indexOf("#")>-1 || sb.indexOf(";")>-1) {
+	    	return new ArrayList<Users>(1);
+	    }	
+		return usersDao.selectWaitByUsdt(sb.toString());
+	}
+	
+	@Override
+	public List<Users> selectTestWaitByUsdt(BigDecimal amount, Integer maxNumber, Byte paymentType, int hour) {			
+		StringBuilder sb=new StringBuilder();		
+		sb.append("select DISTINCT u.user_id from users u where u.type=2 and u.status=1 and u.role=1");		
+		sb.append(" and u.work_hours & "+hour+"<>0"); 
+	    sb.append(" and u.available_credit>="+amount);			
+	    sb.append(" order by available_credit desc");	 		    
+	    sb.append(" LIMIT "+maxNumber);	
+	    if(sb.indexOf("#")>-1 || sb.indexOf(";")>-1) {
+	    	return new ArrayList<Users>(1);
+	    }	
+		return usersDao.selectTestWaitByUsdt(sb.toString());
+	}
+
+	@Override
+	public Users selectByPrimaryKeyForLock(Long userId) {
+		// TODO Auto-generated method stub
+		return usersDao.selectByPrimaryKeyForLock(userId);
+	}
+
+	@Override
+	public Users selectUserInfo(Long userId) {
+		// TODO Auto-generated method stub
+		return usersDao.selectUserInfo(userId);
+	}
+
+}

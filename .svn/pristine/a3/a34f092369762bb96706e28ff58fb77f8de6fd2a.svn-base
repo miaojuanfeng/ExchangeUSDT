@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.CurrencyDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.Currency" >
+    <id column="currency_type" property="currencyType" jdbcType="VARCHAR" />
+    <result column="currency_name" property="currencyName" jdbcType="CHAR" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+    <result column="rate" property="rate" jdbcType="DECIMAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    currency_type, currency_name, status, rate, create_time, remark
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from currency
+    where currency_type = #{currencyType,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from currency
+    where currency_type = #{currencyType,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.contactsImprove.entity.api.Currency" >
+    insert into currency (currency_type, currency_name, status, 
+      rate, create_time, remark
+      )
+    values (#{currencyType,jdbcType=VARCHAR}, #{currencyName,jdbcType=CHAR}, #{status,jdbcType=TINYINT}, 
+      #{rate,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.Currency" >
+    insert into currency
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="currencyType != null" >
+        currency_type,
+      </if>
+      <if test="currencyName != null" >
+        currency_name,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="rate != null" >
+        rate,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="currencyType != null" >
+        #{currencyType,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyName != null" >
+        #{currencyName,jdbcType=CHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="rate != null" >
+        #{rate,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.Currency" >
+    update currency
+    <set >
+      <if test="currencyName != null" >
+        currency_name = #{currencyName,jdbcType=CHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="rate != null" >
+        rate = #{rate,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where currency_type = #{currencyType,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.contactsImprove.entity.api.Currency" >
+    update currency
+    set currency_name = #{currencyName,jdbcType=CHAR},
+      status = #{status,jdbcType=TINYINT},
+      rate = #{rate,jdbcType=DECIMAL},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      remark = #{remark,jdbcType=VARCHAR}
+    where currency_type = #{currencyType,jdbcType=VARCHAR}
+  </update>
+</mapper>

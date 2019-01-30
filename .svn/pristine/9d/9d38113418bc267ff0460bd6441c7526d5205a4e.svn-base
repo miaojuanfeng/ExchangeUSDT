@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.MerchantNotifyDao">
+	<resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.MerchantNotify">
+		<id column="trade_number" property="tradeNumber" jdbcType="CHAR" />
+		<result column="merchant_user_id" property="merchantUserId" jdbcType="BIGINT" />
+		<result column="notify_status" property="notifyStatus" jdbcType="TINYINT" />
+		<result column="nofity_num" property="nofityNum" jdbcType="TINYINT" />
+		<result column="slot_index" property="slotIndex" jdbcType="INTEGER" />
+		<result column="slot_interval" property="slotInterval" jdbcType="INTEGER" />
+		<result column="notify_param" property="notifyParam" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+		<result column="private_key" property="privateKey" jdbcType="VARCHAR" />
+		<result column="remark" property="remark" jdbcType="VARCHAR" />
+	</resultMap>
+	
+	<sql id="Base_Column_List">
+		trade_number, merchant_user_id, notify_status, nofity_num, slot_index, slot_interval,
+		notify_param, create_time, update_time, remark
+	</sql>
+	
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from merchant_notify
+		where trade_number = #{tradeNumber,jdbcType=CHAR}
+	</select>
+	
+	<select id="selectBySlotIndex" resultMap="BaseResultMap">
+		select
+			mn.trade_number,
+			mn.merchant_user_id,
+			mn.notify_param,
+			mn.slot_interval,
+			mn.slot_index,
+			um.private_key
+		from
+			merchant_notify mn,
+			user_merchant um
+		where
+			mn.merchant_user_id = um.user_id
+			and mn.notify_status = 0
+			and mn.slot_index = #{slotIndex,jdbcType=INTEGER}
+	</select>
+	
+	<select id="selectByGreaterThanSlotIndex" resultMap="BaseResultMap">
+		select
+			mn.trade_number,
+			mn.merchant_user_id,
+			mn.notify_param,
+			mn.slot_interval,
+			mn.slot_index,
+			um.private_key
+		from
+			merchant_notify mn,
+			user_merchant um
+		where 
+			mn.merchant_user_id = um.user_id
+			and mn.notify_status = 0
+			and #{slotIndex,jdbcType=INTEGER} > mn.slot_index
+	</select>
+	
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete
+		from
+			merchant_notify
+		where
+			trade_number = #{tradeNumber,jdbcType=CHAR}
+	</delete>
+	
+	<insert id="insertSelective" parameterType="com.contactsImprove.entity.api.MerchantNotify">
+		insert into merchant_notify
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="tradeNumber != null">
+				trade_number,
+			</if>
+			<if test="merchantUserId != null">
+				merchant_user_id,
+			</if>
+			<if test="notifyStatus != null">
+				notify_status,
+			</if>
+			<if test="nofityNum != null">
+				nofity_num,
+			</if>
+			<if test="slotIndex != null">
+				slot_index,
+			</if>
+			<if test="slotInterval != null">
+				slot_interval,
+			</if>
+			<if test="notifyParam != null">
+				notify_param,
+			</if>
+			<if test="createTime != null">
+				create_time,
+			</if>
+			<if test="updateTime != null">
+				update_time,
+			</if>
+			<if test="remark != null">
+				remark,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="tradeNumber != null">
+				#{tradeNumber,jdbcType=CHAR},
+			</if>
+			<if test="merchantUserId != null">
+				#{merchantUserId,jdbcType=BIGINT},
+			</if>
+			<if test="notifyStatus != null">
+				#{notifyStatus,jdbcType=TINYINT},
+			</if>
+			<if test="nofityNum != null">
+				#{nofityNum,jdbcType=TINYINT},
+			</if>
+			<if test="slotIndex != null">
+				#{slotIndex,jdbcType=INTEGER},
+			</if>
+			<if test="slotInterval != null">
+				#{slotInterval,jdbcType=INTEGER},
+			</if>
+			<if test="notifyParam != null">
+				#{notifyParam,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="remark != null">
+				#{remark,jdbcType=VARCHAR},
+			</if>
+		</trim>
+		on DUPLICATE KEY UPDATE
+		<trim suffixOverrides=",">
+			<if test="tradeNumber != null">
+				trade_number=#{tradeNumber,jdbcType=CHAR},
+			</if>
+			<if test="merchantUserId != null">
+				merchant_user_id=#{merchantUserId,jdbcType=BIGINT},
+			</if>
+			<if test="notifyStatus != null">
+				notify_status=#{notifyStatus,jdbcType=TINYINT},
+			</if>
+			<if test="nofityNum != null">
+				nofity_num=#{nofityNum,jdbcType=TINYINT},
+			</if>
+			<if test="slotIndex != null">
+				slot_index=#{slotIndex,jdbcType=INTEGER},
+			</if>
+			<if test="slotInterval != null">
+				slot_interval=#{slotInterval,jdbcType=INTEGER},
+			</if>
+			<if test="notifyParam != null">
+				notify_param=#{notifyParam,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time=#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateTime != null">
+				update_time=#{updateTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="remark != null">
+				remark=#{remark,jdbcType=VARCHAR},
+			</if>
+		</trim>		
+	</insert>
+	
+	<update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.MerchantNotify">
+		update merchant_notify
+		<set>
+			<if test="merchantUserId != null">
+				merchant_user_id = #{merchantUserId,jdbcType=BIGINT},
+			</if>
+			<if test="notifyStatus != null">
+				notify_status = #{notifyStatus,jdbcType=TINYINT},
+			</if>
+			<if test="nofityNum != null">
+				nofity_num = #{nofityNum,jdbcType=TINYINT},
+			</if>
+			<if test="slotIndex != null">
+				slot_index = #{slotIndex,jdbcType=INTEGER},
+			</if>
+			<if test="slotInterval != null">
+				slot_interval = #{slotInterval,jdbcType=INTEGER},
+			</if>
+			<if test="notifyParam != null">
+				notify_param = #{notifyParam,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateTime != null">
+				update_time = #{updateTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="remark != null">
+				remark = #{remark,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where trade_number = #{tradeNumber,jdbcType=CHAR}
+	</update>
+</mapper>

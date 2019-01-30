@@ -1,0 +1,19 @@
+package com.contactsImprove.ferriswheel;
+
+
+import java.util.TimerTask;
+
+import com.contactsImprove.utils.BridgeUSDTRate;
+
+
+
+public class ExchangeRateTask extends TimerTask {
+	
+	@Override
+	public void run() {
+			
+		BridgeUSDTRate.setRateByCoinbase();
+		
+	}
+	
+}

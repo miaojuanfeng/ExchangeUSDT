@@ -1,0 +1,150 @@
+package com.contactsImprove.controller.admin;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import com.contactsImprove.constant.ResponseCode.StatusCode;
+import com.contactsImprove.entity.api.UserMerchant;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.json.JSON;
+import com.contactsImprove.service.api.UsersService;
+import com.contactsImprove.utils.LoggerUtil;
+
+@Controller
+@RequestMapping("/admin/user")
+public class UsersController {
+
+	@Autowired
+	private UsersService usersService;
+
+	@RequestMapping(value = "/merchants")
+	public String merchantView() {
+		return "merchant";
+	}
+	
+	@RequestMapping(value = "/users")
+	public String usersView() {
+		return "users";
+	}
+	
+	@RequestMapping(value = "/moneyusers")
+	public String moneyusersView() {
+		return "moneyusers";
+	}
+	
+	@RequestMapping(value = "/examine")
+	public String examine() {
+		return "examine";
+	}
+	
+	@RequestMapping(value = "/examineUser")
+	@ResponseBody
+	public Map<String, Object> examineUser(Users users) {
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			List<Users> list = usersService.selectUsersByStatus(users);
+			resultMap.put("code", StatusCode._0.getStatus());
+			resultMap.put("msg", StatusCode._200.getMsg());
+			resultMap.put("count", users.getPageTotal());
+			resultMap.put("data", list);
+			return resultMap;
+		} catch (Exception e) {
+			resultMap.put("code", StatusCode._500.getStatus());
+			resultMap.put("msg", StatusCode._500.getMsg());
+			LoggerUtil.error(e.toString(), e);
+			return resultMap;
+		}
+	}
+
+	/**
+	 * 分页查询商户
+	 * 
+	 * @param users
+	 * @return
+	 */
+	@RequestMapping(value = "/selectUsersByMerchantList")
+	@JSON(type = Users.class, include = "userId,userName,phoneNumber,status,userMerchant,userWallet")
+	@JSON(type = UserMerchant.class, include = "privateKey,publicKey,createTime")
+	@JSON(type = UserWallet.class, include = "currencyNumber,freezeNumber,walletAddress")
+	public Map<String, Object> selectUsersByMerchantList(Users users,@DateTimeFormat(pattern = "yyyy-MM-dd")Date createTime) {
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			UserMerchant um = new UserMerchant();
+			um.setCreateTime(createTime);
+			users.setUserMerchant(um);
+			List<Users> list = usersService.selectUsersByMerchantList(users);
+			resultMap.put("code", StatusCode._0.getStatus());
+			resultMap.put("msg", StatusCode._200.getMsg());
+			resultMap.put("count", users.getPageTotal());
+			resultMap.put("data", list);
+			return resultMap;
+		} catch (Exception e) {
+			resultMap.put("code", StatusCode._500.getStatus());
+			resultMap.put("msg", StatusCode._500.getMsg());
+			LoggerUtil.error(e.toString(), e);
+			return resultMap;
+		}
+	}
+
+	/**
+	 * 分页查询用户
+	 * 
+	 * @param users
+	 * @return
+	 */
+	@RequestMapping(value = "/selectUsersByType")
+	@JSON(type = Users.class, include = "userId,userName,phoneNumber,status,userWallet")
+	@JSON(type = UserMerchant.class, include = "currencyNumber,freezeNumber,walletAddress")
+	public Map<String, Object> selectUsersByType(Users users) {
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			List<Users> list = usersService.selectUsersByType(users);
+			resultMap.put("code", StatusCode._0.getStatus());
+			resultMap.put("msg", StatusCode._200.getMsg());
+			resultMap.put("count", users.getPageTotal());
+			resultMap.put("data", list);
+			return resultMap;
+		} catch (Exception e) {
+			resultMap.put("code", StatusCode._500.getStatus());
+			resultMap.put("msg", StatusCode._500.getMsg());
+			LoggerUtil.error(e.toString(), e);
+			return resultMap;
+		}
+	}
+	
+	@RequestMapping(value = "/updateUser")
+	@ResponseBody
+	@Transactional
+	public Map<String, Object> update(Users users) {
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			if(users != null) {
+				int resilt = usersService.updateByPrimaryKeySelective(users);
+				if(resilt > 0) {
+					resultMap.put("code", StatusCode._200.getStatus());
+					resultMap.put("msg", StatusCode._200.getMsg());
+				}
+			} else {
+				resultMap.put("code", StatusCode._201.getStatus());
+				resultMap.put("msg", StatusCode._201.getMsg());
+			}
+			return resultMap;
+		} catch (Exception e) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			resultMap.put("code", StatusCode._500.getStatus());
+			resultMap.put("msg", StatusCode._500.getMsg());
+			LoggerUtil.error(e.toString(), e);
+			return resultMap;
+		}
+	}
+
+}

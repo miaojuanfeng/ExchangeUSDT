@@ -1,0 +1,39 @@
+package com.contactsImprove.dao.api;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.contactsImprove.entity.api.Users;
+
+public interface UsersDao {
+    int deleteByPrimaryKey(Long userId);
+
+    int insertSelective(Users record);
+
+    Users selectByPrimaryKey(Long userId);
+    
+    Users selectUserInfo(Long userId);
+    
+    Users selectUserWithWallet(Long userId);
+    
+    Users selectByPrimaryKeyForLock(Long userId);
+
+    int updateByPrimaryKeySelective(Users record);
+    
+    List<Users> selectUsersByList(Users record);
+
+    Users selectByPhoneNumber(String phoneNumber);   
+    
+    Users selectExistPhoneNumber(String phoneNumber);
+    
+    List<Users> selectWaitByUsdt(String sql);
+    
+    List<Users> selectTestWaitByUsdt(String sql);
+    
+    List<Users> selectUsersByUserFidAndLevel(@Param("userFid") Long userFid, @Param("level") Byte level);
+    
+    List<Users> hasUser(@Param("userId") Long userId);
+    
+    List<Users> selectUsersByLevelAndCentre(@Param("level") Byte level, @Param("centre") Byte centre);
+}

@@ -1,0 +1,47 @@
+package com.contactsImprove.controller.admin;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.contactsImprove.constant.ResponseCode.StatusCode;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.utils.LoggerUtil;
+
+@Controller
+@RequestMapping("/admin/order")
+public class OrderController {
+
+	@Autowired
+	private OrdersService orderService;
+	
+	@RequestMapping(value = "/orders")
+	public String orderView() {
+		return "order";
+	}
+
+	@RequestMapping(value = "/selectOrderByList")
+	@ResponseBody
+	public Map<String, Object> selectOrderByList(Orders orders) {
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			List<Orders> list = orderService.selectByOrderList(orders);
+			resultMap.put("code", StatusCode._0.getStatus());
+			resultMap.put("msg", StatusCode._200.getMsg());
+			resultMap.put("count", orders.getPageTotal());
+			resultMap.put("data", list);
+			return resultMap;
+		} catch (Exception e) {
+			resultMap.put("code", StatusCode._500.getStatus());
+			resultMap.put("msg", StatusCode._500.getMsg());
+			LoggerUtil.error(e.toString(), e);
+			return resultMap;
+		}
+	}
+
+}

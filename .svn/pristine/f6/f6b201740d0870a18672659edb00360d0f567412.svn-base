@@ -1,0 +1,23 @@
+log4j.rootLogger=DEBUG,CONSOLE
+log4j.addivity.org.apache=false
+
+log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender
+log4j.appender.CONSOLE.Threshold=DEBUG
+log4j.appender.CONSOLE.ImmediateFlush=TRUE 
+log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout
+log4j.appender.CONSOLE.layout.ConversionPattern=%d{yyyy-MM-dd HH\:mm\:ss} -%-4r [%t] %-5p  %x - %m%n
+log4j.appender.CONSOLE.Target=System.out
+log4j.appender.CONSOLE.encoding=UTF-8
+
+#logger
+log4j.logger.org.springframework=ERROR
+log4j.logger.org.mybatis.spring=DEBUG
+log4j.logger.org.apache.ibatis.io.ResolverUtil=DEBUG
+log4j.logger.com.ibatis=ERROR  
+log4j.logger.com.ibatis.common.jdbc.SimpleDataSource=ERROR  
+log4j.logger.com.ibatis.common.jdbc.ScriptRunner=ERROR  
+log4j.logger.com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate=ERROR  
+log4j.logger.java.sql.Connection=ERROR  
+log4j.logger.java.sql.Statement=ERROR  
+log4j.logger.java.sql.PreparedStatement=ERROR  
+log4j.logger.java.sql.ResultSet=ERROR

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.PaymentRotateDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.PaymentRotate" >
+    <id column="payment_id" property="paymentId" jdbcType="BIGINT" />
+    <result column="payment_volume" property="paymentVolume" jdbcType="DECIMAL" />
+    <result column="payment_number" property="paymentNumber" jdbcType="SMALLINT" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+    <result column="slot_index" property="slotIndex" jdbcType="INTEGER" />
+    <result column="interval_min" property="intervalMin" jdbcType="INTEGER" />
+    <result column="interval_max" property="intervalMax" jdbcType="INTEGER" />
+    <result column="limit_volume" property="limitVolume" jdbcType="DECIMAL" />
+    <result column="limit_number" property="limitNumber" jdbcType="SMALLINT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    payment_id, payment_volume, payment_number, status, slot_index, interval_min, interval_max, 
+    limit_volume, limit_number
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from payment_rotate
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </select>
+    
+    <select id="selectByLock" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from payment_rotate
+    where payment_id = #{paymentId,jdbcType=BIGINT} for update
+  </select>
+    
+   <select id="selectBySlotIndex" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select <include refid="Base_Column_List" />
+    from payment_rotate
+    where status=0 and slot_index=#{slotIndex,jdbcType=INTEGER}
+  </select>
+  
+  <select id="selectByGreaterThanSlotIndex" resultMap="BaseResultMap" parameterType="java.lang.String" >
+  ${value}
+  </select>
+
+ <update id="updateBatchStatus" parameterType="java.util.List">
+	UPDATE payment_rotate
+	<trim prefix="set" suffixOverrides=",">
+	    <trim prefix="status =case" suffix="end,">
+	        <foreach collection="list" item="item" index="index">
+	        	<if test="item.paymentId !=null and item.status!=null">
+	            	when payment_id=#{item.paymentId} then #{item.status}
+	            </if>
+	        </foreach>
+	    </trim>
+	    <trim prefix="payment_volume =case" suffix="end,">
+	        <foreach collection="list" item="item" index="index">
+	        	<if test="item.paymentId !=null and item.paymentVolume!=null">
+	            	when payment_id=#{item.paymentId} then #{item.paymentVolume}
+	            </if>
+	        </foreach>
+	    </trim>
+	    	    <trim prefix="payment_number =case" suffix="end,">
+	        <foreach collection="list" item="item" index="index">
+	        	<if test="item.paymentId !=null and item.paymentNumber!=null">
+	            	when payment_id=#{item.paymentId} then #{item.paymentNumber}
+	            </if>
+	        </foreach>
+	    </trim>
+	</trim>
+	WHERE payment_id IN
+	<foreach collection="list" item="item" index="index" separator="," open="(" close=")">
+	    #{item.paymentId}
+	</foreach>
+  </update>  
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from payment_rotate
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.PaymentRotate" >
+    insert into payment_rotate
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="paymentId != null" >
+        payment_id,
+      </if>
+      <if test="paymentVolume != null" >
+        payment_volume,
+      </if>
+      <if test="paymentNumber != null" >
+        payment_number,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="slotIndex != null" >
+        slot_index,
+      </if>
+      <if test="intervalMin != null" >
+        interval_min,
+      </if>
+      <if test="intervalMax != null" >
+        interval_max,
+      </if>
+      <if test="limitVolume != null" >
+        limit_volume,
+      </if>
+      <if test="limitNumber != null" >
+        limit_number,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="paymentId != null" >
+        #{paymentId,jdbcType=BIGINT},
+      </if>
+      <if test="paymentVolume != null" >
+        #{paymentVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="paymentNumber != null" >
+        #{paymentNumber,jdbcType=SMALLINT},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="slotIndex != null" >
+        #{slotIndex,jdbcType=INTEGER},
+      </if>
+      <if test="intervalMin != null" >
+        #{intervalMin,jdbcType=INTEGER},
+      </if>
+      <if test="intervalMax != null" >
+        #{intervalMax,jdbcType=INTEGER},
+      </if>
+      <if test="limitVolume != null" >
+        #{limitVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="limitNumber != null" >
+        #{limitNumber,jdbcType=SMALLINT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.PaymentRotate" >
+    update payment_rotate
+    <set >
+      <if test="paymentVolume != null" >
+        payment_volume = #{paymentVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="paymentNumber != null" >
+        payment_number = #{paymentNumber,jdbcType=SMALLINT},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="slotIndex != null" >
+        slot_index = #{slotIndex,jdbcType=INTEGER},
+      </if>
+      <if test="intervalMin != null" >
+        interval_min = #{intervalMin,jdbcType=INTEGER},
+      </if>
+      <if test="intervalMax != null" >
+        interval_max = #{intervalMax,jdbcType=INTEGER},
+      </if>
+      <if test="limitVolume != null" >
+        limit_volume = #{limitVolume,jdbcType=DECIMAL},
+      </if>
+      <if test="limitNumber != null" >
+        limit_number = #{limitNumber,jdbcType=SMALLINT},
+      </if>
+    </set>
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </update>
+</mapper>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.admin.BankMarkDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.admin.BankMark" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="bank_name" property="bankName" jdbcType="VARCHAR" />
+    <result column="bank_mark" property="bankMark" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, bank_name, bank_mark, create_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from bank_mark
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  
+  <select id="selectBankMarkList" resultMap="BaseResultMap">
+    select bank_name, bank_mark from bank_mark order by bank_mark desc    
+  </select>
+  
+  <select id="selectALlBankMark" parameterType="com.contactsImprove.entity.admin.BankMark" resultMap="BaseResultMap"  statementType="CALLABLE">
+  	CALL selectByPage(#{queryStr,mode=IN,jdbcType=VARCHAR}, #{pageNumber,mode=IN,jdbcType=INTEGER},#{pageSize,mode=IN,jdbcType=INTEGER},#{pageTotal,mode=OUT,jdbcType=INTEGER})
+  </select>
+    
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from bank_mark
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.admin.BankMark" >
+    insert into bank_mark
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="bankName != null" >
+        bank_name,
+      </if>
+      <if test="bankMark != null" >
+        bank_mark,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="bankName != null" >
+        #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankMark != null" >
+        #{bankMark,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+	on DUPLICATE KEY UPDATE
+	<trim suffixOverrides=",">
+      <if test="id != null" >
+        id=#{id,jdbcType=INTEGER},
+      </if>
+      <if test="bankName != null" >
+        bank_name=#{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankMark != null" >
+       bank_mark=#{bankMark,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time=#{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.admin.BankMark" >
+    update bank_mark
+    <set >
+      <if test="bankName != null" >
+        bank_name = #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankMark != null" >
+        bank_mark = #{bankMark,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

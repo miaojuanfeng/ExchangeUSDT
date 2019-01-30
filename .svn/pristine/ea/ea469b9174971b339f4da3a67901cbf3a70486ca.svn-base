@@ -1,0 +1,621 @@
+package com.contactsImprove.controller.api;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import com.alibaba.druid.util.StringUtils;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.constant.UsersConst;
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.constant.ResponseCode.StatusCode;
+import com.contactsImprove.constant.UsersConst.UsersType;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.entity.api.PaymentMode;
+import com.contactsImprove.entity.api.UserMerchant;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.json.JSON;
+import com.contactsImprove.service.api.JournalAccountService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.PaymentModeService;
+import com.contactsImprove.service.api.UserMerchantService;
+import com.contactsImprove.service.api.UserWalletService;
+import com.contactsImprove.service.api.UsersService;
+import com.contactsImprove.utils.Md5Util;
+import com.contactsImprove.utils.PageUtil;
+import com.contactsImprove.utils.RSAUtils;
+import com.contactsImprove.utils.RedisUtil;
+import com.contactsImprove.utils.UserIdEngender;
+import com.contactsImprove.utils.SMSUtil;
+import com.contactsImprove.utils.SessionUtil;
+import com.contactsImprove.utils.StringUtil;
+import com.contactsImprove.utils.USDTUtils;
+import com.contactsImprove.utils.UploadUtil;
+
+@Controller
+@RequestMapping("/api")
+public class LoginCtrl {
+
+	@Autowired
+	private UsersService usersService;
+	@Autowired
+	UserMerchantService userMerchantService;
+	@Autowired
+	UserWalletService userWalletService;
+	@Autowired
+	OrdersService ordersService;
+	@Autowired
+	PaymentModeService paymentModeService;
+	@Autowired
+	JournalAccountService journalAccountService;
+	@Autowired
+	USDTUtils uSDTUtils;
+	/**
+	 * 提币
+	 */
+	@RequestMapping(value = "/withdrawUSDT", method = RequestMethod.POST)
+	@JSON(type = UserWallet.class, include = "walletAddress,status")
+	@Transactional
+	public Map<String, Object> withdrawUSDT(HttpServletRequest request,
+			@RequestParam("toAddress") String toAddress,@RequestParam("amount") BigDecimal amount,@RequestParam("smsCode") String smsCode) {
+		Map<String, Object> retval = new HashMap<>(2);
+		Users user = SessionUtil.getSession(request);
+		if (!StringUtil.isBlank(smsCode)
+				&& RedisUtil.getValue(SystemConst.SMSKey + user.getPhoneNumber()).equals(smsCode)){
+			if(amount.compareTo(BigDecimal.ZERO)<=0) {
+				retval.put("code", StatusCode._309.getStatus());
+				retval.put("msg", StatusCode._309.getMsg());
+				return retval;
+			}
+	    	UserWallet uw=userWalletService.findByLock(user.getUserId(), SystemConst.USDT);
+			if(uw.getCurrencyNumber().compareTo(amount)<0) {
+				retval.put("code", StatusCode._206.getStatus());
+				retval.put("msg", StatusCode._206.getMsg());
+				return retval;
+			}		
+			amount=amount.subtract(amount.multiply(SystemConst.poundage));
+			Map<String,Object> result=uSDTUtils.send(uw.getWalletAddress(), toAddress, amount+"");
+		    if(Integer.parseInt(result.get("code")+"")==200) {
+				UserWallet nowUw=new UserWallet();
+				nowUw.setWalletId(uw.getWalletId());
+				nowUw.setCurrencyNumber(uw.getCurrencyNumber().subtract(amount));
+				userWalletService.updateByPrimaryKeySelective(nowUw);		
+				nowUw.setFreezeNumber(uw.getFreezeNumber());
+				journalAccountService.logAccountChange(uw, nowUw, "商户提币到："+toAddress, amount);			
+				retval.put("code", StatusCode._200.getStatus());
+				retval.put("msg", "交易大约需要30~120分钟到账");
+		    }else {
+				retval.put("code", StatusCode._201.getStatus());
+				retval.put("msg", "本次提币失败");
+		    }
+		}else {
+			retval.put("code", StatusCode._309.getStatus());
+			retval.put("msg", StatusCode._309.getMsg() + "或是验证码已过期");			
+		}
+		return retval;
+	}
+	
+	/**
+	 * 
+	 * 我的钱包地址
+	 */
+	@RequestMapping(value = "/walletAddress", method = RequestMethod.POST)
+	@JSON(type = UserWallet.class, include = "walletAddress,status")
+	public Map<String, Object> walletAddress(HttpServletRequest request) {
+		Map<String, Object> retval = new HashMap<>(2);
+		Users user = SessionUtil.getSession(request);
+
+		UserWallet uw = userWalletService.selectByType(user.getUserId(), SystemConst.USDT);
+		if (uw != null) {
+			retval.put("data", uw);
+			retval.put("code", StatusCode._200.getStatus());
+			retval.put("msg", StatusCode._200.getMsg());
+		} else {
+			retval.put("code", StatusCode._310.getStatus());
+			retval.put("msg", StatusCode._310.getMsg());
+		}
+
+		return retval;
+	}
+
+	/**
+	 * 获取短信
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/sendValidSMS", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> sendValidSMS(HttpServletRequest request,
+			@RequestParam("phoneNumber") String phoneNumber) {
+		Map<String, Object> retval = new HashMap<>(2);
+
+		if (!StringUtil.isBlank(phoneNumber) && SMSUtil.isChinaPhoneLegal(phoneNumber)) {
+			SMSUtil.sendValidateCode(phoneNumber);
+			retval.put("code", StatusCode._200.getStatus());
+			retval.put("msg", StatusCode._200.getMsg());
+		} else {
+			retval.put("code", StatusCode._205.getStatus());
+			retval.put("msg", StatusCode._205.getMsg());
+		}
+
+		return retval;
+	}
+
+	/**
+	 * 修改密码
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/modifyPwd", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> modifyPwd(HttpServletRequest request, @RequestParam("newPwd") String newPwd,
+			@RequestParam("smsCode") String smsCode) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		if (!StringUtil.isBlank(smsCode)
+				&& RedisUtil.getValue(SystemConst.SMSKey + user.getPhoneNumber()).equals(smsCode)) {
+			String secretPassword = Md5Util.execute(user.getUserId() + newPwd);
+			Users newUser = new Users();
+			newUser.setUserId(user.getUserId());
+			newUser.setPassword(secretPassword);
+			usersService.updateByPrimaryKeySelective(newUser);
+			retval.put("code", StatusCode._200.getStatus());
+			retval.put("msg", StatusCode._200.getMsg());
+		} else {
+			retval.put("code", StatusCode._309.getStatus());
+			retval.put("msg", StatusCode._309.getMsg() + "或是验证码已过期");
+		}
+		return retval;
+	}
+
+	/**
+	 * 个人中心
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/userCenter", method = RequestMethod.POST)
+	@JSON(type = Users.class, filter = "userMerchant,userWallet,pageNumber,pageSize,pageTotal,queryStr,password")
+	public Map<String, Object> userCenter(HttpServletRequest request) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		Users userNew = usersService.selectByPrimaryKey(user.getUserId());
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+		retval.put("data", userNew);
+		return retval;
+	}
+
+	/**
+	 * 删除支付方式
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/delPayment", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> delPayment(HttpServletRequest request, @RequestParam("paymentId") Long paymentId) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		PaymentMode pm = paymentModeService.selectByPrimaryKey(paymentId);
+		if (pm==null || !pm.getUserId().equals(user.getUserId())) {
+			retval.put("code", StatusCode._309.getStatus());
+			retval.put("msg", StatusCode._309.getMsg());
+			return retval;
+		}
+		if (!StringUtil.isBlank(pm.getPaymentImage())) {
+			File file = new File(request.getSession().getServletContext().getRealPath("/"), pm.getPaymentImage());
+			if (file.exists() && file.isFile()) {
+				file.delete();
+			}
+		}
+		paymentModeService.deleteByPrimaryKey(paymentId);
+
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 设为收款号
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/setPaymentDefault", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> setPaymentDefault(HttpServletRequest request,
+			@RequestParam("paymentId") Long paymentId) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		PaymentMode pm = paymentModeService.selectByPrimaryKey(paymentId);
+		if (pm == null || !pm.getUserId().equals(user.getUserId())) {
+			retval.put("code", StatusCode._309.getStatus());
+			retval.put("msg", StatusCode._309.getMsg());
+			return retval;
+		}
+		paymentModeService.setPaymentDefault(paymentId, user.getUserId());
+
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 修改支付二维码
+	 * 
+	 * @param request
+	 * @param pm
+	 * @return
+	 */
+
+	@RequestMapping(value = "/modifyQR", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> modifyQR(HttpServletRequest request, PaymentMode pm) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		if (user.getType() == UsersType._2.status) {
+			PaymentMode pmOld = paymentModeService.selectByPrimaryKey(pm.getPaymentId());
+			if (pmOld == null || !user.getUserId().equals(pmOld.getUserId()) || pmOld.getPaymentType() == null
+					|| StringUtil.isBlank(pmOld.getPaymentNumber()) || StringUtil.isBlank(pmOld.getPaymentImage())
+					|| StringUtil.isBlank(pmOld.getUserName()) || pmOld.getPaymentType() > 3
+					|| pmOld.getPaymentType() < 0) {
+				retval.put("code", StatusCode._309.getStatus());
+				retval.put("msg", StatusCode._309.getMsg());
+				return retval;
+			}
+
+			if (!pm.getPaymentQR().isEmpty() && pm.getPaymentQR().getSize() > 3) {
+				String path = UploadUtil.uploadPaymentFile(request.getSession(), pm, pmOld.getPaymentImage());
+				pm.setPaymentImage(path);
+			}
+		}
+
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 添加收款方式
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/addPayment", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> addPayment(HttpServletRequest request, PaymentMode pm) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		if (user.getType() == UsersType._2.status) {
+			if (pm.getPaymentType() == null || StringUtil.isBlank(pm.getPaymentNumber())
+					|| StringUtil.isBlank(pm.getUserName()) || pm.getPaymentType() > 3 || pm.getPaymentType() < 0) {
+				retval.put("code", StatusCode._309.getStatus());
+				retval.put("msg", StatusCode._309.getMsg());
+				return retval;
+			}
+			pm.setUserId(user.getUserId());
+			if (pm.getPaymentQR() != null && !pm.getPaymentQR().isEmpty() && pm.getPaymentQR().getSize() > 3) {
+				String path = UploadUtil.uploadPaymentFile(request.getSession(), pm);
+				pm.setPaymentImage(path);
+			}
+			pm.setUserId(user.getUserId());
+			pm.setCreateTime(new Date());
+			pm.setStatus((byte) 1);
+			paymentModeService.insert(pm);
+		}
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 我的收款方式
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/paylist", method = RequestMethod.POST)
+	@JSON(type = PaymentMode.class, filter = "paymentType,paymentQR")
+	public Map<String, Object> paylist(HttpServletRequest request, PaymentMode pm) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		if (user.getType() == UsersType._2.status) {
+			List<PaymentMode> list = paymentModeService.selectPayementList(user.getUserId());
+			list.forEach(pay -> {
+				pay.setPaymentTypeName(Payment.getMeaningByType(pay.getPaymentType()));
+				if (!StringUtil.isBlank(pay.getPaymentImage())) {
+					pay.setPaymentImage(request.getContextPath() + pay.getPaymentImage());
+				}
+			});
+			retval.put("data", list);
+		}
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 设置钱包地址
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/setWalletAddress", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> setWalletAddress(HttpServletRequest request, @RequestParam("address") String address) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Users user = SessionUtil.getSession(request);
+		if (user.getType() != UsersType._1.status) {
+			retval.put("code", StatusCode._310.getStatus());
+			retval.put("msg", StatusCode._310.getMsg());
+			return retval;
+		}
+		UserWallet uw = userWalletService.selectByType(user.getUserId(), SystemConst.USDT);
+
+		UserWallet newAddress = new UserWallet();
+		newAddress.setWalletId(uw.getWalletId());
+		newAddress.setWalletAddress(address);
+		userWalletService.updateByPrimaryKeySelective(newAddress);
+
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+
+		return retval;
+	}
+
+	/**
+	 * 用户首页
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/index", method = RequestMethod.POST)
+	@JSON(type = UserWallet.class, include = "currencyNumber,freezeNumber")
+	@JSON(type = Orders.class, filter = "notifyUrl,notifyStatus,timestamp,ext,payTimeout,sign,queryStr,pageSize,pageTotal,pageNumber,paymentType")
+	public Map<String, Object> index(HttpServletRequest request) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Map<String, Object> data = new HashMap<>(2);
+		Users user = SessionUtil.getSession(request);
+		UserWallet uw = userWalletService.selectByType(user.getUserId(), SystemConst.USDT);
+		data.put("UserWallet", uw);
+		data.put("Orders", findUserOrders(null, null, null, user));
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+		retval.put("data", data);
+
+		return retval;
+	}
+
+	public Map<String, Object> findUserOrders(Byte status, Integer pageNumber, Integer pageSize, Users user) {
+		Map<String, Object> data = new HashMap<>(2);
+		PageUtil pageUtil = new PageUtil();
+
+		if (pageNumber != null)
+			pageUtil.setPageNumber(pageNumber);
+		if (pageSize != null)
+			pageUtil.setPageSize(pageSize);
+		List<Orders> list = null;
+		if (user.getType() == UsersType._1.status) {
+			list = ordersService.selectPageByMerchantUserId(status, user.getUserId(), pageUtil);
+		} else if (user.getType() == UsersType._2.status) {
+			list = ordersService.selectPageBytUserId(status, user.getUserId(), pageUtil);
+		}
+		data.put("OrdersList", list);
+		data.put("pageNumber", pageUtil.getPageNumber());
+		data.put("pageSize", pageUtil.getPageSize());
+		data.put("totalNumber", pageUtil.getPageTotal());
+
+		return data;
+	}
+
+	/**
+	 * 全部订单
+	 * 
+	 * @param request
+	 * @param pageNumber
+	 * @param pageSize
+	 * @return
+	 */
+	@RequestMapping(value = "/userOrders", method = RequestMethod.POST)
+	@JSON(type = Orders.class, filter = "notifyUrl,notifyStatus,timestamp,ext,payTimeout,sign,queryStr,pageSize,pageTotal,pageNumber,paymentType")
+	public Map<String, Object> userOrders(HttpServletRequest request, Integer pageNumber, Integer pageSize) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Map<String, Object> data = new HashMap<>(2);
+		Users user = SessionUtil.getSession(request);
+		data.put("Orders", findUserOrders(null, pageNumber, pageSize, user));
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+		retval.put("data", data);
+		return retval;
+	}
+
+	/**
+	 * 按状态查询
+	 * 
+	 * @param request
+	 * @param pageNumber
+	 * @param pageSize
+	 * @return
+	 */
+	@RequestMapping(value = "/userOrdersByStatus", method = RequestMethod.POST)
+	@JSON(type = Orders.class, filter = "notifyUrl,notifyStatus,timestamp,ext,payTimeout,sign,queryStr,pageSize,pageTotal,pageNumber,paymentType")
+	public Map<String, Object> userOrdersByStatus(HttpServletRequest request, Integer pageNumber, Integer pageSize,
+			Byte status) {
+		Map<String, Object> retval = new HashMap<>(3);
+		Map<String, Object> data = new HashMap<>(2);
+		Users user = SessionUtil.getSession(request);
+		data.put("Orders", findUserOrders(status, pageNumber, pageSize, user));
+		retval.put("code", StatusCode._200.getStatus());
+		retval.put("msg", StatusCode._200.getMsg());
+		retval.put("data", data);
+		return retval;
+	}
+
+	/**
+	 * 登入
+	 * 
+	 * @param phoneNumber
+	 * @param password
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/login")
+	@JSON(type = Users.class, filter = "userMerchant,userWallet,pageNumber,pageSize,pageTotal,queryStr,password,status")
+	public Map<String, Object> login(@RequestParam("phoneNumber") String phoneNumber,
+			@RequestParam("password") String password, HttpServletRequest request, HttpServletResponse response) {
+		Map<String, Object> retval = new HashMap<>();
+
+		if (StringUtils.isEmpty(phoneNumber)) {
+			retval.put("code", StatusCode._203.getStatus());
+			retval.put("msg", StatusCode._203.getMsg());
+		}
+
+		if (StringUtils.isEmpty(password)) {
+			retval.put("code", StatusCode._204.getStatus());
+			retval.put("msg", StatusCode._204.getMsg());
+		}
+
+		Users users = usersService.selectByPhoneNumber(phoneNumber);
+		if (users != null) {
+			String secretPassword = Md5Util.execute(users.getUserId() + password);
+			if (secretPassword.equals(users.getPassword())) {
+				retval.put("code", StatusCode._200.getStatus());
+				retval.put("msg", StatusCode._200.getMsg());
+				SessionUtil.setSession(request, users);
+				retval.put("data", users);
+			} else {
+				retval.put("code", StatusCode._204.getStatus());
+				retval.put("msg", StatusCode._204.getMsg());
+			}
+		} else {
+			retval.put("code", StatusCode._203.getStatus());
+			retval.put("msg", StatusCode._203.getMsg());
+		}
+
+		return retval;
+	}
+
+	/**
+	 * 商户信息
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/merchantInfo", method = RequestMethod.POST)
+	@JSON(type = UserMerchant.class, include = "userId,privateKey,publicKey")
+	public Map<String, Object> merchantInfo(HttpServletRequest request) {
+		Map<String, Object> retval = new HashMap<>();
+		Users user = SessionUtil.getSession(request);
+		if(user.getType()==UsersType._1.status) {
+			long userId = user.getUserId();
+			UserMerchant um = userMerchantService.selectByPrimaryKey(userId);
+			if (um != null) {
+				retval.put("code", StatusCode._200.getStatus());
+				retval.put("msg", StatusCode._200.getMsg());
+				retval.put("data", um);
+			} else {
+				retval.put("code", StatusCode._203.getStatus());
+				retval.put("msg", StatusCode._203.getMsg());
+			}
+		}else {
+			retval.put("code", StatusCode._310.getStatus());
+			retval.put("msg", StatusCode._310.getMsg());
+		}
+		return retval;
+	}
+
+	/**
+	 * 注册
+	 * 
+	 * @param phoneNumber
+	 * @param password
+	 * @param type
+	 * @return
+	 */
+	@RequestMapping(value = "/register", method = RequestMethod.POST)
+	@ResponseBody
+	@Transactional
+	public Map<String, Object> register(@RequestParam("phoneNumber") String phoneNumber,
+			@RequestParam("password") String password, @RequestParam("type") Byte type,
+			@RequestParam("smsCode") String smsCode) {
+		Map<String, Object> retval = new HashMap<>();
+		if (StringUtils.isEmpty(phoneNumber)) {
+			retval.put("code", StatusCode._203.getStatus());
+			retval.put("msg", StatusCode._203.getMsg());
+		}
+		if (StringUtils.isEmpty(password)) {
+			retval.put("code", StatusCode._204.getStatus());
+			retval.put("msg", StatusCode._204.getMsg());
+		}
+		Users users = usersService.selectByPhoneNumber(phoneNumber);
+		if (users == null) {
+			if (!StringUtil.isBlank(smsCode) && RedisUtil.getValue(SystemConst.SMSKey + phoneNumber).equals(smsCode)) {
+				Long userId = UserIdEngender.createUserId();
+				String secretPassword = Md5Util.execute(userId + password);
+				Users newUser = new Users();
+				newUser.setUserId(userId);
+				newUser.setPassword(secretPassword);
+				newUser.setType(UsersType._0.status);
+				newUser.setPhoneNumber(phoneNumber);
+				switch(type) {
+				case 1:
+					newUser.setStatus(UsersConst.UsersStatus._3.status);
+					break;
+				case 2:
+					newUser.setStatus(UsersConst.UsersStatus._2.status);
+					break;
+				}
+				usersService.insertSelective(newUser);
+				if (type == UsersType._1.status) {
+					UserMerchant um = new UserMerchant();
+					Map<String, String> key = RSAUtils.createKeys(2048);
+					um.setUserId(userId);
+					um.setPrivateKey(key.get(RSAUtils.key_private));
+					um.setPublicKey(key.get(RSAUtils.key_public));
+					um.setStatus((byte) 1);
+					um.setCreateTime(new Date());
+					userMerchantService.insertSelective(um);
+				}
+
+				UserWallet uw = new UserWallet();
+				uw.setUserId(userId);
+				uw.setCurrencyType(SystemConst.USDT);
+				uw.setStatus((byte) 1);
+				uw.setWalletAddress(new USDTUtils().getNewAddress());
+
+				userWalletService.insertSelective(uw);
+
+				retval.put("code", StatusCode._200.getStatus());
+				retval.put("msg", StatusCode._200.getMsg());
+			} else {
+				retval.put("code", StatusCode._309.getStatus());
+				retval.put("msg", StatusCode._309.getMsg() + "或是验证码已过期");
+			}
+		} else {
+			retval.put("code", StatusCode._202.getStatus());
+			retval.put("msg", StatusCode._202.getMsg());
+		}
+
+		return retval;
+	}
+}

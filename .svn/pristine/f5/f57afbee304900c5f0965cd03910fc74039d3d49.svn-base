@@ -1,0 +1,26 @@
+package com.contactsImprove.dao.api;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.contactsImprove.entity.api.Users;
+
+public interface UsersDao {
+    int deleteByPrimaryKey(Long userId);
+
+    int insertSelective(Users record);
+
+    Users selectByPrimaryKey(Long userId);
+    
+    Users selectByPrimaryKeyForLock(Long userId);
+
+    int updateByPrimaryKeySelective(Users record);
+    
+    List<Users> selectUsersByList(Users record);
+
+    Users selectByPhoneNumber(String phoneNumber);
+    
+    List<Users> selectWaitByUsdt(@Param("amount")BigDecimal amount,@Param("maxNumber") Integer maxNumber,@Param("paymentType") Byte paymentType);
+}

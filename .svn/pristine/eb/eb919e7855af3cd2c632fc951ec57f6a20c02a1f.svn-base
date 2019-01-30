@@ -1,0 +1,160 @@
+package com.contactsImprove.utils;
+
+import java.util.Date;
+import java.util.TreeMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.constant.MerchantOrderConst.NotifyStatus;
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.constant.NofitySlotConst.SlotIndex;
+import com.contactsImprove.entity.api.MerchantNotify;
+import com.contactsImprove.entity.api.NotifyPara;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.service.api.MerchantNotifyService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.PaymentModeService;
+import com.contactsImprove.service.api.UserMerchantService;
+import com.contactsImprove.service.api.UserWalletService;
+
+import net.sf.json.JSONObject;
+
+@Service("notifyCommercial")
+public class NotifyCommercial {
+	
+	String success="success";
+	
+	@Autowired
+	UserMerchantService userMerchantService;	
+	@Autowired
+	OrdersService ordersService;	
+	@Autowired
+	PaymentModeService paymentModeService;
+	@Autowired
+	UserWalletService userWalletService;	
+	@Autowired
+	MerchantNotifyService merchantNotifyService;
+	
+	@Transactional(propagation=Propagation.REQUIRED)
+	public byte notifyOrderFinish(MerchantNotify orderPara,String privateKey) {	
+		byte notifyStatus=NotifyStatus.notyet.status;
+		JSONObject jsonNp=JSONObject.fromObject(orderPara.getNotifyParam());		
+		NotifyPara np=(NotifyPara)JSONObject.toBean(jsonNp, NotifyPara.class);		
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		paramap.put("merchantUserId", np.getMerchantUserId()+"");
+		paramap.put("outTradeNo", np.getOutTradeNo());
+		paramap.put("amount", np.getAmount()==null ? "":np.getAmount()+"");
+		paramap.put("currencyAmount", np.getCurrencyAmount()==null ? "" :np.getCurrencyAmount()+"");
+		paramap.put("currencyType", np.getCurrencyType());
+		paramap.put("paymentType", np.getPaymentType());	
+		paramap.put("tradeNumber", np.getTradeNumber());		
+		paramap.put("tradeStatus", np.getTradeStatus()+"");
+		paramap.put("gmtCreate", np.getGmtCreate());
+		paramap.put("gmtPayment", np.getGmtPayment());
+		paramap.put("gmtClose", np.getGmtClose());
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+		paramap.put("merchantAccount", np.getMerchantAccount());
+		paramap.put("fromAddress", np.getFromAddress());
+		paramap.put("toAddress", np.getToAddress());
+		paramap.put("dealType", np.getDealType()+"");
+		String orderStr=OrderUtil.createParaOrderStr(paramap);
+		String sign=RSAUtils.signature(orderStr, privateKey);
+		paramap.put("sign",sign);
+		orderStr=OrderUtil.createParaOrderStrByEncode(paramap);	
+		orderPara.setNofityNum((byte)(orderPara.getNofityNum()==null ? 1 : orderPara.getNofityNum()+1));
+		String result=HttpUtil.post(np.getNotifyUrl(), orderStr);			
+		if(result.toLowerCase().indexOf(success)>-1) {
+			if(orderPara.getSlotIndex()!=SystemConst.fisrtNotify) {
+				merchantNotifyService.deleteByPrimaryKey(orderPara.getTradeNumber());			
+			}
+			notifyStatus=NotifyStatus.success.status;
+		}else {
+			// 修改回调时间,进入下一次回调.
+			int oldSlotInterval=orderPara.getSlotInterval();
+			int nextSlotIndex=setNextSlotIndex(orderPara.getSlotInterval());
+			orderPara.setSlotInterval(nextSlotIndex);
+			orderPara.setSlotIndex((DateTools.getSecondOfDay()+nextSlotIndex)%86400);
+			if(oldSlotInterval==SystemConst.fisrtNotify) {				
+				merchantNotifyService.insertSelective(orderPara);
+				notifyStatus=NotifyStatus.inhand.status;
+			}else {
+				if(nextSlotIndex==-1) {//回调达到最大次数，删除。
+					merchantNotifyService.deleteByPrimaryKey(orderPara.getTradeNumber());
+					notifyStatus=NotifyStatus.fail.status;
+				}else {
+					MerchantNotify mn=new MerchantNotify();
+					mn.setTradeNumber(orderPara.getTradeNumber());
+					mn.setSlotIndex(orderPara.getSlotIndex());
+					mn.setSlotInterval(orderPara.getSlotInterval());
+					mn.setNofityNum(orderPara.getNofityNum());
+					merchantNotifyService.updateByPrimaryKeySelective(mn);
+				}	
+			}
+		}
+		return notifyStatus;
+	}
+	
+	public MerchantNotify createNotify(Orders order,String tradeStatus) {
+		MerchantNotify mn=new MerchantNotify();	
+    	mn.setTradeNumber(order.getTradeNumber());
+	    mn.setNotifyStatus(NotifyStatus.inhand.status);
+	    mn.setMerchantUserId(order.getMerchantUserId());
+	    mn.setNofityNum((byte)0);
+	    // 第一次回调，间隔秒。
+	    mn.setSlotInterval(SystemConst.fisrtNotify);
+	    mn.setSlotIndex(DateTools.getSecondOfDay()+SlotIndex._0.minute);
+	    // 回调参数
+	    NotifyPara np=new NotifyPara();
+	    np.setNotifyUrl(order.getNotifyUrl());
+	    np.setMerchantUserId(order.getMerchantUserId());
+	    np.setOutTradeNo(order.getOutTradeNo());
+	    np.setAmount(order.getAmount());
+	    np.setPaymentId(order.getPaymentId());	    
+	    if(!StringUtil.isBlank(order.getPaymentTypeName())) {	    	
+	    	np.setPaymentType(Payment.getCodeByMeaning(order.getPaymentTypeName()));
+	    }	    
+	    np.setCurrencyType(order.getCurrencyType());
+	    np.setCurrencyAmount(order.getCurrencyAmount());
+	    np.setTradeNumber(order.getTradeNumber());	
+	    np.setTradeStatus(tradeStatus);
+	    np.setDealType(order.getDealType());
+	    np.setFromAddress(order.getFromAddress());
+	    np.setToAddress(order.getToAddress());
+	    np.setMerchantAccount(order.getMerchantAccount());
+	    np.setGmtCreate(DateTools.DateToStr2(order.getCreateTime()));
+	    np.setGmtPayment(DateTools.DateToStr2(order.getPaymentTime()));
+	    np.setGmtClose(DateTools.DateToStr2(order.getCloseTime()));				    
+	    mn.setNotifyParam(JSONObject.fromObject(np).toString());		    
+	    mn.setCreateTime(new Date());
+	    
+	    return mn;
+	}
+	public int setNextSlotIndex(Integer slotIndex) {
+		int slot=0;
+		switch(slotIndex) {
+		case SystemConst.fisrtNotify:		
+		case 1:
+		case 0:			
+			slot=SlotIndex._5.minute;
+			break;
+		case 300:
+			slot=SlotIndex._30.minute;
+			break;
+		case 1800:
+			slot=SlotIndex._60.minute;
+			break;
+		case 3600:
+			slot=SlotIndex._240.minute;
+			break;
+		case 14400:
+			slot=SlotIndex._720.minute;
+			break;
+		 default:
+			slot=-1;
+			break;			
+		}			
+		return slot;
+	}
+}

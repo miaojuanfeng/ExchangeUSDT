@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.UsersDao">
+	<resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.Users">
+		<id column="user_id" property="userId" jdbcType="BIGINT" />
+		<result column="user_fid" property="userFid" jdbcType="BIGINT" />
+		<result column="user_name" property="userName" jdbcType="VARCHAR" />
+		<result column="phone_number" property="phoneNumber" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+		<result column="type" property="type" jdbcType="TINYINT" />
+		<result column="status" property="status" jdbcType="TINYINT" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="available_credit" property="availableCredit" jdbcType="DECIMAL" />
+		<result column="freezing_quota" property="freezingQuota" jdbcType="DECIMAL" />
+		<result column="reserve" property="reserve" jdbcType="VARCHAR" />
+		<result column="work_hours" property="workHours" jdbcType="INTEGER" />
+		<result column="in_rate" property="inRate" jdbcType="DECIMAL" />
+    	<result column="out_rate" property="outRate" jdbcType="DECIMAL" />
+    	<result column="lock" property="lock" jdbcType="TINYINT" />    	
+    	<result column="role" property="role" jdbcType="TINYINT" />    	
+		<association property="userMerchant" javaType="com.contactsImprove.entity.api.UserMerchant" resultMap="MerchantResultMap"></association>
+		<association property="userWallet" javaType="com.contactsImprove.entity.api.UserWallet" resultMap="WalletResultMap"></association>
+	</resultMap>
+
+	<resultMap id="MerchantResultMap" type="com.contactsImprove.entity.api.UserMerchant">
+		<id column="user_id" property="userId" jdbcType="BIGINT" />
+		<result column="private_key" property="privateKey" jdbcType="VARCHAR" />
+		<result column="public_key" property="publicKey" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+	<resultMap id="WalletResultMap" type="com.contactsImprove.entity.api.UserWallet">
+		<id column="wallet_id" property="walletId" jdbcType="BIGINT" />
+		<result column="currency_number" property="currencyNumber" jdbcType="DECIMAL" />
+		<result column="freeze_number" property="freezeNumber" jdbcType="DECIMAL" />
+		<result column="wallet_address" property="walletAddress" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		    user_id, user_name, phone_number, password, type, status, create_time, reserve, available_credit, freezing_quota, work_hours,`lock`,role
+	</sql>
+	
+<select id="selectWaitByUsdt" resultMap="BaseResultMap" parameterType="java.lang.String">
+${value}
+</select>
+
+<select id="selectTestWaitByUsdt" resultMap="BaseResultMap" parameterType="java.lang.String">
+${value}
+</select>
+	
+	 <select id="selectByPhoneNumber" resultMap="BaseResultMap" parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from
+			users
+		where
+			phone_number = #{phoneNumber, jdbcType=VARCHAR} and status>0
+	</select>
+	
+	 <select id="selectExistPhoneNumber" resultMap="BaseResultMap" parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from
+			users
+		where
+			phone_number = #{phoneNumber, jdbcType=VARCHAR} 
+	</select>	
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from
+			users
+		where
+			user_id = #{userId, jdbcType=BIGINT}
+	</select>
+	
+	<select id="selectUserInfo" resultMap="BaseResultMap" parameterType="java.lang.Long">
+		select u.user_id, u.user_name, u.phone_number, u.type, u.status, available_credit, freezing_quota, work_hours,uw.in_rate,uw.out_rate from users u, user_wallet uw 
+		where u.user_id=uw.user_id and u.user_id =#{userId, jdbcType=BIGINT};
+	</select>
+	
+	<select id="selectByPrimaryKeyForLock" resultMap="BaseResultMap"
+		parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from users
+		where user_id = #{userId,jdbcType=BIGINT} for update
+	</select>
+
+	<select id="selectUsersByList" resultMap="BaseResultMap"
+		parameterType="com.contactsImprove.entity.api.Users" statementType="CALLABLE">
+		CALL selectByPage(#{queryStr},#{pageNumber,mode=IN, jdbcType=INTEGER},#{pageSize,mode=IN, jdbcType=INTEGER},#{pageTotal,mode=OUT, jdbcType=INTEGER})
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from
+			users
+		where
+			user_id = #{userId,jdbcType=BIGINT}
+	</delete>
+
+	 <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.Users" >
+    insert into users
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="userName != null" >
+        user_name,
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="reserve != null" >
+        reserve,
+      </if>
+      <if test="availableCredit != null" >
+        available_credit,
+      </if>
+      <if test="freezingQuota != null" >
+        freezing_quota,
+      </if>
+      <if test="workHours != null" >
+        work_hours,
+      </if>
+      <if test="lock != null" >
+        `lock`,
+      </if>      
+      <if test="role != null" >
+        role,
+      </if>      
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="reserve != null" >
+        #{reserve,jdbcType=VARCHAR},
+      </if>
+      <if test="availableCredit != null" >
+        #{availableCredit,jdbcType=DECIMAL},
+      </if>
+      <if test="freezingQuota != null" >
+        #{freezingQuota,jdbcType=DECIMAL},
+      </if>
+      <if test="workHours != null" >
+        #{workHours,jdbcType=INTEGER},
+      </if>
+      <if test="lock != null" >
+        #{lock,jdbcType=TINYINT},
+      </if>      
+      <if test="role != null" >
+        #{role,jdbcType=TINYINT},
+      </if>      
+    </trim>
+  </insert>
+	
+<update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.Users" >
+    update users
+    <set >
+      <if test="userName != null" >
+        user_name = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="reserve != null" >
+        reserve = #{reserve,jdbcType=VARCHAR},
+      </if>
+      <if test="availableCredit != null" >
+        available_credit = #{availableCredit,jdbcType=DECIMAL},
+      </if>
+      <if test="freezingQuota != null" >
+        freezing_quota = #{freezingQuota,jdbcType=DECIMAL},
+      </if>
+      <if test="workHours != null" >
+        work_hours = #{workHours,jdbcType=INTEGER},
+      </if>
+      <if test="lock != null" >
+        `lock` = #{lock,jdbcType=TINYINT},
+      </if>      
+      <if test="role != null" >
+        role = #{role,jdbcType=TINYINT},
+      </if>      
+    </set>
+    where user_id = #{userId,jdbcType=BIGINT}
+  </update> 
+</mapper>

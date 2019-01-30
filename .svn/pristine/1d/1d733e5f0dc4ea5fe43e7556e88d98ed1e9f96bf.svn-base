@@ -1,0 +1,101 @@
+layui.use('table', function() {
+	var table = layui.table,
+		$ = layui.$;
+	
+	table.render({
+		elem : '#user',
+		height : 570,
+		url : '/ContactsImprove/admin/user/selectUsersByType',
+		where : {
+			type: 0
+		},
+		toolbar: true,
+		title : '用户数据表',
+		cols : [ [
+			{
+				checkbox : true,
+				fixed : true
+			},
+			{
+				field : 'userId',
+				title : 'ID',
+				width : 180,
+				fixed : 'left'
+			},
+			{
+				field : 'userName',
+				title : '用户名',
+				width : 130
+			},
+			{
+				field : 'phoneNumber',
+				title : '手机号',
+				width : 120
+			},
+			{
+				field : 'userWallet',
+				title : '可用数量',
+				width : 90,
+				templet : '<div>{{ FormatCurrencyNumber(d.userWallet)}}</div>'
+			},
+			{
+				field : 'userWallet',
+				title : '冻结数量',
+				width : 90,
+				templet : '<div>{{ FormatFreezeNumber(d.userWallet)}}</div>'
+			},
+			{
+				field : 'userWallet',
+				title : '钱包地址',
+				width : 200,
+				templet : '<div>{{ FormatWalletAddress(d.userWallet)}}</div>'
+			},
+			{
+				field : 'status',
+				title : '状态',
+				width : 115,
+				templet: '#switchTpl', unresize: true
+			},
+		] ],
+		id : 'seach_reload',
+		page : true,
+	});
+
+	var active = {
+		reload : function() {
+			table.reload('seach_reload', {
+				page : {
+					curr : 1 //重新从第 1 页开始
+				},
+				where : {
+					userName : $('#seach_userName').val(),
+					phoneNumber : $('#seach_phone').val(),
+					status : $('#seach_status').val()
+				}
+			});
+		}
+	};
+
+	$('.layui-seach .layui-btn').on('click', function() {
+		var type = $(this).data('type');
+		active[type] ? active[type].call(this) : '';
+	});
+});
+
+function FormatCurrencyNumber(str) {
+	if(str != null) {
+		return str.currencyNumber;
+	}
+}
+
+function FormatFreezeNumber(str) {
+	if(str != null) {
+		return str.freezeNumber;
+	}
+}
+
+function FormatWalletAddress(str) {
+	if(str != null) {
+		return str.walletAddress;
+	}
+}

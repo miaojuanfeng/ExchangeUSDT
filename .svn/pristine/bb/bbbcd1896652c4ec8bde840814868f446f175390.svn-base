@@ -1,0 +1,23 @@
+package com.contactsImprove.utils;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.entity.api.Users;
+
+public class SessionUtil {
+	
+	public static void setSession(HttpServletRequest request,Users users) {		
+		request.getSession().setAttribute(SystemConst.sessionId, users);
+	}
+	
+	public static Users getSession(HttpServletRequest request) {
+		Object user=request.getSession().getAttribute(SystemConst.sessionId);
+		if(user!=null) {
+			return (Users)user;
+		}
+		
+		return null;
+	}
+
+}

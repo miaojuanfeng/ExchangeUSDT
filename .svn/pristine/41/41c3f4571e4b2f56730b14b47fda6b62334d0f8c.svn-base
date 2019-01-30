@@ -1,0 +1,435 @@
+package com.contactsImprove.controller.api;
+
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.contactsImprove.constant.MerchantOrderConst.NotifyStatus;
+import com.contactsImprove.constant.MerchantOrderConst.OrderType;
+import com.contactsImprove.constant.MerchantOrderConst.OrdersStatus;
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.constant.MerchantOrderConst.TradeStatus;
+import com.contactsImprove.constant.NofitySlotConst.SlotIndex;
+import com.contactsImprove.constant.ResponseCode.StatusCode;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.entity.api.Currency;
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.entity.api.MerchantNotify;
+import com.contactsImprove.entity.api.NotifyPara;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.entity.api.PaymentMode;
+import com.contactsImprove.entity.api.UserMerchant;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.ferriswheel.Wheel;
+import com.contactsImprove.json.JSON;
+import com.contactsImprove.service.api.CurrencyService;
+import com.contactsImprove.service.api.JournalAccountService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.PaymentModeService;
+import com.contactsImprove.service.api.UserMerchantService;
+import com.contactsImprove.service.api.UserWalletService;
+import com.contactsImprove.service.api.UsersService;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.NotifyCommercial;
+import com.contactsImprove.utils.OrderNumEngender;
+import com.contactsImprove.utils.OrderUtil;
+import com.contactsImprove.utils.RSAUtils;
+import com.contactsImprove.utils.SMSUtil;
+import com.contactsImprove.utils.SessionUtil;
+import com.contactsImprove.utils.StringUtil;
+import com.contactsImprove.utils.USDTUtils;
+
+import net.sf.json.JSONObject;
+
+@Controller
+@RequestMapping("/api")
+public class InitiateRecharge {
+	
+	@Autowired
+	UserMerchantService userMerchantService;	
+	@Autowired
+	OrdersService ordersService;	
+	@Autowired
+	PaymentModeService paymentModeService;
+	@Autowired
+	UserWalletService userWalletService;
+	@Autowired
+	NotifyCommercial notifyCommercial;
+	@Autowired
+	CurrencyService currencyService;
+	@Autowired
+	UsersService usersService;
+	@Autowired
+	JournalAccountService journalAccountService;
+	@Autowired
+	USDTUtils uSDTUtils;
+	
+	/**
+	 * 商户客户提币
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * currencyAmount:数量
+	 * timestamp:时间戳
+	 * currencyType:币种类型
+	 * toAddress:提现地址
+	 * subject:主题
+	 * version:版本号
+	 * 可选
+	 * merchantAccount：商户的客户号
+	 * notifyUrl:回调地址
+	 * body:交易描述
+	 * @return
+	 */
+	@RequestMapping(value = "/transferUsdt",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> transferUsdt(Orders order){
+		Map<String, Object> map = new HashMap<>();	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo())
+		|| StringUtil.isBlank(order.getCurrencyType())
+		|| (StringUtil.isBlank(order.getCurrencyAmount()) && order.getCurrencyAmount().compareTo(BigDecimal.ZERO)<=0) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getSubject()) || StringUtil.isBlank(order.getToAddress())
+		|| StringUtil.isBlank(order.getTimestamp())
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}		
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("currencyType", order.getCurrencyType());
+		paramap.put("currencyAmount", order.getCurrencyAmount()+"");		
+		paramap.put("version", order.getVersion());
+		paramap.put("subject", order.getSubject());
+		paramap.put("body", order.getBody());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("notifyUrl", order.getNotifyUrl());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+		paramap.put("toAddress", order.getToAddress());
+		String line=OrderUtil.createParaOrderStr(paramap);
+	    boolean isPass=RSAUtils.verifySignature(line, order.getSign(), umt.getPublicKey());
+	    if(!isPass) {
+			map.put("code", StatusCode._304.status);
+			map.put("msg", StatusCode._304.msg);
+			return map;
+	    }
+	    UserWallet uw=userWalletService.findByLock(order.getMerchantUserId(), order.getCurrencyType());
+	    if(uw==null || uw.getCurrencyNumber().compareTo(order.getCurrencyAmount())<0) {
+			map.put("code", StatusCode._201.status);
+			map.put("msg", order.getCurrencyType()+"数量不足");
+			return map;
+	    }	    	   	    	   	    
+	    String tradeNumber=OrderNumEngender.getOrderNum();
+	    order.setTradeNumber(tradeNumber);	    
+	    Map<String,Object> result=uSDTUtils.send(uw.getWalletAddress(), order.getToAddress(), order.getCurrencyAmount()+"");
+	    order.setCreateTime(new Date());
+	    order.setPaymentTime(order.getCreateTime());
+	    order.setCloseTime(order.getCreateTime());
+	    if(Integer.parseInt(result.get("code")+"")==200){
+		    order.setFromAddress(uw.getWalletAddress());
+		    order.setToAddress(order.getToAddress());
+	    	order.setStatus(OrdersStatus._2.status);
+		    UserWallet userWallet=new UserWallet();
+		    userWallet.setWalletId(uw.getWalletId());
+		    userWallet.setCurrencyNumber(uw.getCurrencyNumber().subtract(order.getCurrencyAmount())); 
+		    userWalletService.updateByPrimaryKeySelective(userWallet);	
+		    userWallet.setFreezeNumber(uw.getFreezeNumber());    	    	    
+		    journalAccountService.logAccountChange(uw, userWallet, "客户提币："+order.getTradeNumber(), order.getCurrencyAmount());		    
+		    // 创建回调
+		    if(!StringUtil.isBlank(order.getNotifyUrl())) {	    	
+		        // 创建回调
+		    	MerchantNotify mn=notifyCommercial.createNotify(order);
+			    UserMerchant um=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+			    //立即回调
+			    notifyCommercial.notifyOrderFinish(mn, um.getPrivateKey());
+		    }	    
+		    map.put("code", StatusCode._200.status);
+		    map.put("msg", "交易大约需要30~120分钟到账");
+	    }else {
+	    	order.setStatus(OrdersStatus._4.status);
+	    	map.put("code", StatusCode._201.getStatus());
+	    	map.put("msg", "本次提币失败");
+	    }	    
+	    order.setType(OrderType._1.type);
+	    ordersService.insert(order);	    	    		
+
+	    return map;
+	}
+	
+	/**
+	 * 币商确认付款
+	 * @param orderPara
+	 * @return
+	 */
+	@RequestMapping(value = "/confirmPay",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> confirmPay(String tradeNumber,HttpServletRequest request){
+		Map<String, Object> map = new HashMap<>();		
+		if(StringUtil.isBlank(tradeNumber)) {
+			map.put("code", StatusCode._308.status);
+			map.put("msg", StatusCode._308.msg);
+			return map;
+		}			
+		Users user=SessionUtil.getSession(request);
+		long userId=user.getUserId();		
+		Orders order=ordersService.selectByPrimaryKey(tradeNumber);		
+		if(order==null || order.getUserId()!=userId || order.getStatus()!=OrdersStatus._1.status) {
+			map.put("code", StatusCode._310.status);
+			map.put("msg", StatusCode._310.msg);
+			return map;
+		}		
+		Orders newOrder=new Orders();
+		newOrder.setTradeNumber(tradeNumber);		
+		newOrder.setCloseTime(new Date());	
+		order.setCloseTime(newOrder.getCloseTime());
+		UserWallet uwBs=userWalletService.findByLock(userId, order.getCurrencyType());
+		UserWallet uwSh=userWalletService.findByLock(order.getMerchantUserId(), order.getCurrencyType());
+		//Map<String,Object> result=uSDTUtils.send(uwBs.getWalletAddress(), uwSh.getWalletAddress(), order.getCurrencyAmount()+"");
+		newOrder.setFromAddress(uwBs.getWalletAddress());
+		newOrder.setToAddress(uwSh.getWalletAddress());
+		newOrder.setStatus(OrdersStatus._2.status);
+		ordersService.updateByPrimaryKeySelective(newOrder);
+		// 减去币商卖出的币 。
+		UserWallet userWallet = new UserWallet();
+		userWallet.setWalletId(uwBs.getWalletId());
+		userWallet.setFreezeNumber(uwBs.getFreezeNumber().subtract(order.getCurrencyAmount()));
+		userWalletService.updateByPrimaryKeySelective(userWallet);
+		userWallet.setCurrencyNumber(uwBs.getCurrencyNumber());
+		journalAccountService.logAccountChange(uwBs, userWallet, "订单卖出：" + order.getTradeNumber(),
+				order.getCurrencyAmount());
+		// 商户相应币种增值
+		UserWallet merchantWallet = new UserWallet();
+		merchantWallet.setWalletId(uwSh.getWalletId());
+		merchantWallet.setCurrencyNumber(uwSh.getCurrencyNumber().add(order.getCurrencyAmount()));
+		userWalletService.updateByPrimaryKeySelective(merchantWallet);
+		merchantWallet.setFreezeNumber(uwSh.getFreezeNumber());
+		journalAccountService.logAccountChange(uwSh, merchantWallet, "订单买入：" + order.getTradeNumber(),
+				order.getCurrencyAmount());
+		// 创建回调
+		if (!StringUtil.isBlank(order.getNotifyUrl())) {
+			newOrder.setNotifyStatus(NotifyStatus._0.status);
+			// 创建回调
+			MerchantNotify mn = notifyCommercial.createNotify(order);
+			UserMerchant um = userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+			// 立即回调
+			notifyCommercial.notifyOrderFinish(mn, um.getPrivateKey());
+		}
+	    map.put("code", StatusCode._200.status);
+	    map.put("msg", StatusCode._200.msg);
+		return map;
+	}
+		
+	/**	 * 	客户付款给币商，标记订单已付款。
+	 * tradeNumber:交易流水号
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * timestamp：时间戳
+	 * version:版本号
+	 * @param Orders
+	 * @return
+	 */	
+	@RequestMapping(value = "/orderPay",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> orderPay(Orders order){
+		Map<String, Object> map = new HashMap<>();		
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo())
+		|| StringUtil.isBlank(order.getTradeNumber())
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getTimestamp())	
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}		
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt==null || umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("version", order.getVersion());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("tradeNumber", order.getTradeNumber());	
+	    boolean isPass=RSAUtils.verifySignature(OrderUtil.createParaOrderStr(paramap), order.getSign(), umt.getPublicKey());
+	    if(!isPass) {
+			map.put("code", StatusCode._304.status);
+			map.put("msg", StatusCode._304.msg);
+			return map;
+	    }	    
+	    Orders oldOrder=ordersService.selectByPrimaryKey(order.getTradeNumber());	    	    
+	    if(!oldOrder.getMerchantUserId().equals(order.getMerchantUserId())) {
+			map.put("code", StatusCode._310.status);
+			map.put("msg", StatusCode._310.msg);
+			return map;
+	    }
+	    order.setStatus(OrdersStatus._1.status);
+	    order.setPaymentTime(new Date());	    	    
+	    ordersService.updateByPrimaryKeySelective(order);
+	    //删除超时倒计时。
+	    Wheel.removeOrderId(order.getTradeNumber());	    
+	    /** 
+	     *发短信 ，消息通知币商。 
+	     */
+	    Users user= usersService.selectByPrimaryKey(oldOrder.getUserId());	    
+	    SMSUtil.sentPayRemind(user.getPhoneNumber(), oldOrder.getTradeNumber(),oldOrder.getAmount()+""," "+SystemConst.CNY,DateTools.DateToStr2(new Date()));
+	    	    
+	    map.put("code", StatusCode._200.status);
+	    map.put("msg", StatusCode._200.msg);
+	    return map;
+	}
+	
+	
+	/**
+	 * 创建订单，返回币商银行账号，二维付款码。
+	 * outTradeNo,商户订单号
+	 * merchantUserId,商户账号
+	 * currencyType,电子币类型
+	 * amount ,充值金额
+	 * version ,版本号
+	 * subject,主题
+	 * notifyUrl,回调url
+	 * timestamp,时间戳
+	 * paymentType,支付方式。
+	 * 可选参数有：
+	 * merchantAccount: 商户平台用户的唯一标示。 
+	 * body,交易描述	 *
+	 * @param Orders
+	 * @return
+	 */
+	@RequestMapping(value = "/createOrder",method = RequestMethod.POST )
+	@Transactional
+	@JSON(type = Orders.class,include = "tradeNumber,outTradeNo,merchantUserId,merchantAccount,paymentType,currencyType,currencyAmount,exchangeRate,amount,payTimeout")
+	@JSON(type = PaymentMode.class,include = "paymentId,paymentTypeName,paymentNumber,paymentName,paymentImage,userName")
+	public Map<String, Object> createOrder(Orders order){
+		Map<String, Object> map = new HashMap<>();		
+		byte paymentType=Payment.getTypeByCode(order.getPaymentType());
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo()) || StringUtil.isBlank(order.getCurrencyType())
+		|| (StringUtil.isBlank(order.getAmount()) && order.getAmount().compareTo(BigDecimal.ZERO)<=0) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getSubject()) || StringUtil.isBlank(order.getTimestamp())	
+		|| StringUtil.isBlank(order.getPaymentType()) || paymentType==0
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}		
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("currencyType", order.getCurrencyType());
+		paramap.put("amount", order.getAmount()+"");		
+		paramap.put("paymentType", order.getPaymentType());
+		paramap.put("version", order.getVersion());
+		paramap.put("subject", order.getSubject());
+		paramap.put("body", order.getBody());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("notifyUrl", order.getNotifyUrl());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+		String line=OrderUtil.createParaOrderStr(paramap);
+	    boolean isPass=RSAUtils.verifySignature(line, order.getSign(), umt.getPublicKey());
+	    if(!isPass) {
+			map.put("code", StatusCode._304.status);
+			map.put("msg", StatusCode._304.msg);
+			return map;
+	    }
+	    String vtbTradeNo=OrderNumEngender.getOrderNum();
+	    order.setTradeNumber(vtbTradeNo);
+	    order.setStatus(OrdersStatus._0.status);
+	    order.setCreateTime(new Date());	    
+	
+	    Currency c=currencyService.selectByPrimaryKey(order.getCurrencyType());
+	    if(c==null) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;	    	
+	    }
+	    order.setCurrencyAmount(order.getAmount().divide(c.getRate(),6, BigDecimal.ROUND_HALF_UP));
+	    /**
+	     * 随机分配订单给币商
+	     */
+	    List<UserWallet> list=userWalletService.selectUserWalletByCurrencyAmountAndType(order.getCurrencyAmount(), SystemConst.random_limit, paymentType);	    
+	    if(list==null ||list.size()<1) {
+			map.put("code", StatusCode._311.status);
+			map.put("msg", StatusCode._311.msg);
+			return map;
+	    }
+	    java.util.Random random=new java.util.Random();	    
+	    long userId=list.get(random.nextInt(list.size())).getUserId();	    	    
+	    order.setUserId(userId);
+	    order.setPayTimeout(SystemConst.Order_TimeOut);	    	   
+	    order.setExchangeRate(c.getRate());
+	    order.setType(OrderType._0.type);
+	    
+    	List<PaymentMode> pmList=paymentModeService.selectPayementModeByType(userId, paymentType);
+    	pmList.forEach(p -> {
+    		p.setPaymentTypeName(Payment.getMeaningByType(p.getPaymentType()));
+    	});
+	    order.setPaymentNumber(pmList.get(0).getPaymentNumber());
+	    order.setPaymentTypeName(Payment.getMeaningByType((pmList.get(0).getPaymentType())));
+    	order.setPaymentId(pmList.get(0).getPaymentId());
+    	
+	    ordersService.insert(order);
+	    // 加入大转盘
+	    Wheel.pushSlot(vtbTradeNo);	    
+	    /**
+	     * 冻结币商的币 。
+	     */
+	    UserWallet uw= userWalletService.findByLock(userId, order.getCurrencyType());
+	    UserWallet userWallet=new UserWallet();
+	    userWallet.setWalletId(uw.getWalletId());
+	    userWallet.setCurrencyNumber(uw.getCurrencyNumber().subtract(order.getCurrencyAmount()));
+	    userWallet.setFreezeNumber(uw.getFreezeNumber().add(order.getCurrencyAmount()));	    
+	    userWalletService.updateByPrimaryKeySelective(userWallet);	    	    	    
+	    journalAccountService.logAccountChange(uw, userWallet, "客户下单USDT冻结："+order.getTradeNumber(), order.getCurrencyAmount());	    
+		/**
+		 * 返回银行卡 号 和订单 。 	    
+		 */	    
+	    Map<String, Object> mapData = new HashMap<>();
+    	mapData.put("paymentList", pmList);	    	    	    
+	    mapData.put("orderDetail", order);
+	    
+	    map.put("code", StatusCode._200.status);
+	    map.put("msg", StatusCode._200.msg);
+	    map.put("data", mapData);
+	    
+		return map;
+		
+	}
+
+}

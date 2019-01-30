@@ -1,0 +1,308 @@
+package com.contactsImprove.service.api.impl;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.contactsImprove.constant.JournalConst;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.constant.UsersConst;
+import com.contactsImprove.dao.api.JournalAccountDao;
+import com.contactsImprove.dao.api.UserWalletDao;
+import com.contactsImprove.dao.api.UsersDao;
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.notefield.DynamicColumn;
+import com.contactsImprove.service.api.UsersService;
+
+@Service
+public class UsersServiceImpl implements UsersService{
+
+	@Autowired
+	private UsersDao usersDao;
+	
+	@Autowired
+	private JournalAccountDao journalAccountDao;
+	
+	@Autowired
+	private UserWalletDao userWalletDao;
+
+	@Override
+	public Users selectByPhoneNumber(String phoneNumber) {
+		return usersDao.selectByPhoneNumber(phoneNumber);
+	}
+
+	@Override
+	public int insertSelective(Users record) {
+		return usersDao.insertSelective(record);
+	}
+
+	@Override
+	public Users selectByPrimaryKey(Long userId) {
+		return usersDao.selectByPrimaryKey(userId);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(Users record) {
+		return usersDao.updateByPrimaryKeySelective(record);
+	}
+	
+	@Override
+	public List<Users> selectUsersByMerchantList(Users record) {
+		StringBuilder queryStr = new StringBuilder("SELECT u.*, m.private_key, m.public_key, w.currency_number, w.freeze_number, w.wallet_address FROM users u, user_merchant m, user_wallet w WHERE type = 1 AND u.status = 1 AND u.user_id = m.user_id AND u.user_id = w.user_id");			
+		DynamicColumn.appendWhere(queryStr, record);
+		queryStr.append(" order by u.create_time desc");
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectUsersByType(Users record) {
+		StringBuffer queryStr = new StringBuffer("SELECT u.*,  w.currency_number, w.freeze_number, w.wallet_address FROM users u, user_wallet w WHERE type = "+record.getType()+" AND u.user_id = w.user_id");
+		
+		if(record.getUserName() != null && record.getUserName() != "") {
+			queryStr.append(" and user_name like" + "'%"+record.getUserName()+"%'");
+		} 
+		
+		if(record.getPhoneNumber() != null && record.getPhoneNumber() != "") {
+			queryStr.append(" and phone_number like" + "'%"+record.getPhoneNumber()+"%'");
+		} 
+		
+		if(record.getStatus() != null) {
+			queryStr.append(" and u.status = " +record.getStatus());
+		}
+		queryStr.append(" order by u.create_time desc");
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectUsersByStatus(Users record) {
+		StringBuffer queryStr = new StringBuffer("SELECT * FROM users WHERE status = "+record.getStatus());
+		
+		if(record.getUserName() != null && record.getUserName() != "") {
+			queryStr.append(" and user_name like" + "'%"+record.getUserName()+"%'");
+		} 
+		
+		if(record.getPhoneNumber() != null && record.getPhoneNumber() != "") {
+			queryStr.append(" and phone_number like" + "'%"+record.getPhoneNumber()+"%'");
+		} 
+		queryStr.append(" order by create_time desc");
+		record.setQueryStr(queryStr.toString());
+		return usersDao.selectUsersByList(record);
+	}
+
+	@Override
+	public List<Users> selectWaitByUsdt(BigDecimal amount, Integer maxNumber, Byte paymentType, int hour) {			
+		StringBuilder sb=new StringBuilder();		
+		sb.append("select DISTINCT u.user_id from users u where u.type=2 and u.status=1 and u.lock=0 and u.role=0");		
+		sb.append(" and u.work_hours & "+hour+"<>0"); 
+	    sb.append(" and u.available_credit>="+amount);			
+	    sb.append(" order by available_credit desc");	 		    
+	    sb.append(" LIMIT "+maxNumber);	
+	    if(sb.indexOf("#")>-1 || sb.indexOf(";")>-1) {
+	    	return new ArrayList<Users>(1);
+	    }	
+		return usersDao.selectWaitByUsdt(sb.toString());
+	}
+	
+	@Override
+	public List<Users> selectTestWaitByUsdt(BigDecimal amount, Integer maxNumber, Byte paymentType, int hour) {			
+		StringBuilder sb=new StringBuilder();		
+		sb.append("select DISTINCT u.user_id from users u where u.type=2 and u.status=1 and u.role=1");		
+		sb.append(" and u.work_hours & "+hour+"<>0"); 
+	    sb.append(" and u.available_credit>="+amount);			
+	    sb.append(" order by available_credit desc");	 		    
+	    sb.append(" LIMIT "+maxNumber);	
+	    if(sb.indexOf("#")>-1 || sb.indexOf(";")>-1) {
+	    	return new ArrayList<Users>(1);
+	    }	
+		return usersDao.selectTestWaitByUsdt(sb.toString());
+	}
+
+	@Override
+	public Users selectByPrimaryKeyForLock(Long userId) {
+		return usersDao.selectByPrimaryKeyForLock(userId);
+	}
+
+	@Override
+	public Users selectUserInfo(Long userId) {
+		return usersDao.selectUserInfo(userId);
+	}
+	
+	@Override
+	public Users selectUserWithWallet(Long userId) {
+		return usersDao.selectUserWithWallet(userId);
+	}
+
+	@Override
+	public int lockUser(Long userId) {		
+		return 1;
+/*		Users user=new Users();
+		user.setUserId(userId);
+		user.setLock(UsersLock.lock.status);		
+		return usersDao.updateByPrimaryKeySelective(user);*/
+	}
+
+	@Override
+	public int unLockUser(Long userId) {
+		return 1;
+/*		Users user=new Users();
+		user.setUserId(userId);
+		user.setLock(UsersLock.unlock.status);		
+		return usersDao.updateByPrimaryKeySelective(user);*/
+	}
+
+	@Override
+	public Users selectExistPhoneNumber(String phoneNumber) {
+		return usersDao.selectExistPhoneNumber(phoneNumber);
+	}
+	
+	@Override
+	public List<Users> selectUsersByUserFidAndLevel(Long userFid, Byte level) {
+		return usersDao.selectUsersByUserFidAndLevel(userFid, level);
+	}
+
+	@Override
+	public void userLevelUpgrade(Long userId, Byte childLevel, Byte upgradeLevel) {
+		Users user = selectByPrimaryKey(userId);
+		if( user != null && user.getLevel() < upgradeLevel ) {
+			List<Users> users = selectUsersByUserFidAndLevel(userId, childLevel);
+			// 达到人数，升级
+			if( users.size() >= UsersConst.UsersLevel.member.number ) {
+				Users updateUser = new Users();
+				updateUser.setUserId(userId);
+				updateUser.setLevel(upgradeLevel);
+				updateByPrimaryKeySelective(updateUser);
+				// 递归到父邀请人
+				if( upgradeLevel < UsersConst.UsersLevel.shareholder.level && user.getUserFid() != null ) {
+					Integer nextLevel = upgradeLevel.intValue() + 1;
+					userLevelUpgrade(user.getUserFid(), upgradeLevel, nextLevel.byteValue());
+				}
+			}
+		}
+	}
+
+	@Override
+	public void userIncomeMoney(Users user, String tradeNumber, BigDecimal amount, Date date) {
+		List<JournalAccount> journalAccounts = new ArrayList<JournalAccount>();
+		List<UserWallet> userWallets = new ArrayList<UserWallet>();
+		
+		BigDecimal userIncome = amount.multiply(SystemConst.income_user_money_rate).setScale(SystemConst.decimal_place_num, BigDecimal.ROUND_HALF_UP);
+		
+		if( user != null ) {
+			JournalAccount userJA = new JournalAccount();
+			userJA.setTradeNumber(tradeNumber);
+			userJA.setUserId(user.getUserId());
+			userJA.setChangeAmount(userIncome);
+			userJA.setCurrencyNumberBefore(user.getUserWallet().getCurrencyNumber());
+			userJA.setCurrencyNumberAfter(user.getUserWallet().getCurrencyNumber().add(userIncome));
+			userJA.setFreezeNumberBefore(user.getUserWallet().getFreezeNumber());
+			userJA.setFreezeNumberAfter(user.getUserWallet().getFreezeNumber());
+			userJA.setCreateTime(date);
+			userJA.setType(JournalConst.JournalType.income.status);
+			userJA.setRemark("币商提成");
+			journalAccounts.add(userJA);
+			
+			UserWallet updateUserWallet = new UserWallet();
+			updateUserWallet.setWalletId(user.getUserWallet().getWalletId());
+			updateUserWallet.setCurrencyNumber(user.getUserWallet().getCurrencyNumber().add(userIncome));
+			userWallets.add(updateUserWallet);
+		}
+		
+		List<Users> users = hasUser(user.getUserId());
+		if( users.size() > 0 ) {
+			Users fUser = users.get(0);
+			
+			BigDecimal money = userIncome.multiply(new BigDecimal(UsersConst.UsersRate.getRateByLevel(fUser.getLevel(), UsersConst.UsersGrade.one.grage)).divide(new BigDecimal(100))).setScale(SystemConst.decimal_place_num, BigDecimal.ROUND_HALF_UP);
+			
+			JournalAccount userJA = new JournalAccount();
+			userJA.setTradeNumber(tradeNumber);
+			userJA.setUserId(fUser.getUserId());
+			userJA.setChangeAmount(money);
+			userJA.setCurrencyNumberBefore(fUser.getUserWallet().getCurrencyNumber());
+			userJA.setCurrencyNumberAfter(fUser.getUserWallet().getCurrencyNumber().add(money));
+			userJA.setFreezeNumberBefore(fUser.getUserWallet().getFreezeNumber());
+			userJA.setFreezeNumberAfter(fUser.getUserWallet().getFreezeNumber());
+			userJA.setCreateTime(date);
+			userJA.setType(JournalConst.JournalType.income.status);
+			userJA.setRemark(UsersConst.UsersGrade.getMeaningByGrade(UsersConst.UsersGrade.one.grage)+"提成");
+			journalAccounts.add(userJA);
+			
+			UserWallet updateUserWallet = new UserWallet();
+			updateUserWallet.setWalletId(fUser.getUserWallet().getWalletId());
+			updateUserWallet.setCurrencyNumber(fUser.getUserWallet().getCurrencyNumber().add(money));
+			userWallets.add(updateUserWallet);
+		}
+		if( users.size() > 1 ) {
+			Users fUser = users.get(1);
+			
+			BigDecimal money = userIncome.multiply(new BigDecimal(UsersConst.UsersRate.getRateByLevel(fUser.getLevel(), UsersConst.UsersGrade.two.grage)).divide(new BigDecimal(100))).setScale(SystemConst.decimal_place_num, BigDecimal.ROUND_HALF_UP);
+			
+			JournalAccount userJA = new JournalAccount();
+			userJA.setTradeNumber(tradeNumber);
+			userJA.setUserId(fUser.getUserId());
+			userJA.setChangeAmount(money);
+			userJA.setCurrencyNumberBefore(fUser.getUserWallet().getCurrencyNumber());
+			userJA.setCurrencyNumberAfter(fUser.getUserWallet().getCurrencyNumber().add(money));
+			userJA.setFreezeNumberBefore(fUser.getUserWallet().getFreezeNumber());
+			userJA.setFreezeNumberAfter(fUser.getUserWallet().getFreezeNumber());
+			userJA.setCreateTime(date);
+			userJA.setType(JournalConst.JournalType.income.status);
+			userJA.setRemark(UsersConst.UsersGrade.getMeaningByGrade(UsersConst.UsersGrade.two.grage)+"提成");
+			journalAccounts.add(userJA);
+			
+			UserWallet updateUserWallet = new UserWallet();
+			updateUserWallet.setWalletId(fUser.getUserWallet().getWalletId());
+			updateUserWallet.setCurrencyNumber(fUser.getUserWallet().getCurrencyNumber().add(money));
+			userWallets.add(updateUserWallet);
+		}
+		List<Users> shareholders = selectUsersByLevelAndCentre(UsersConst.UsersLevel.shareholder.level, user.getCentre());
+		BigDecimal money = userIncome.multiply(SystemConst.income_shareholder_money_rate.divide(new BigDecimal(shareholders.size()).setScale(SystemConst.decimal_place_num, BigDecimal.ROUND_HALF_UP))).setScale(SystemConst.decimal_place_num, BigDecimal.ROUND_HALF_UP);
+		for (Users shareholder : shareholders) {
+			
+			JournalAccount userJA = new JournalAccount();
+			userJA.setTradeNumber(tradeNumber);
+			userJA.setUserId(shareholder.getUserId());
+			userJA.setChangeAmount(money);
+			userJA.setCurrencyNumberBefore(shareholder.getUserWallet().getCurrencyNumber());
+			userJA.setCurrencyNumberAfter(shareholder.getUserWallet().getCurrencyNumber().add(money));
+			userJA.setFreezeNumberBefore(shareholder.getUserWallet().getFreezeNumber());
+			userJA.setFreezeNumberAfter(shareholder.getUserWallet().getFreezeNumber());
+			userJA.setCreateTime(date);
+			userJA.setType(JournalConst.JournalType.income.status);
+			userJA.setRemark(UsersConst.UsersGrade.getMeaningByGrade(UsersConst.UsersGrade.three.grage)+"提成");
+			journalAccounts.add(userJA);
+			
+			UserWallet updateUserWallet = new UserWallet();
+			updateUserWallet.setWalletId(shareholder.getUserWallet().getWalletId());
+			updateUserWallet.setCurrencyNumber(shareholder.getUserWallet().getCurrencyNumber().add(money));
+			userWallets.add(updateUserWallet);
+		}
+		
+		if( journalAccounts.size() > 0 ) {
+			journalAccountDao.insertBatch(journalAccounts);
+		}
+		if( userWallets.size() > 0 ) {
+			userWalletDao.updateBatch(userWallets);
+		}
+	}
+
+	@Override
+	public List<Users> hasUser(Long userId) {
+		return usersDao.hasUser(userId);
+	}
+
+	@Override
+	public List<Users> selectUsersByLevelAndCentre(Byte level, Byte centre) {
+		// TODO Auto-generated method stub
+		return usersDao.selectUsersByLevelAndCentre(level, centre);
+	}
+
+	
+}

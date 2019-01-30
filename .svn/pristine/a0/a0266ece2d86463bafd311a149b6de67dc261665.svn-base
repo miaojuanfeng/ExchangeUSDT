@@ -1,0 +1,58 @@
+package com.contactsImprove.service.admin.impl;
+
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.contactsImprove.dao.admin.AdminUserDao;
+import com.contactsImprove.entity.admin.AdminUser;
+import com.contactsImprove.service.admin.AdminUserService;
+
+@Service("adminUserService")
+public class AdminUserServiceImpl implements AdminUserService{
+	
+	@Autowired
+	private AdminUserDao adminUserDao;
+
+	@Override
+	public int deleteByPrimaryKey(Long id) {
+		return adminUserDao.deleteByPrimaryKey(id);
+	}
+
+	@Override
+	public int insertSelective(AdminUser adminUser) {
+		return adminUserDao.insertSelective(adminUser);
+	}
+
+	@Override
+	public AdminUser selectByPrimaryKey(Long id) {
+		return adminUserDao.selectByPrimaryKey(id);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(AdminUser adminUser) {
+		return adminUserDao.updateByPrimaryKeySelective(adminUser);
+	}
+
+	@Override
+	public List<AdminUser> selectByPage(AdminUser adminUser) {
+		StringBuffer queryStr = new StringBuffer("select au.*, p.power_name from admin_user au, powers p where au.power_id = p.id");
+		if(adminUser.getUserName() != null && adminUser.getUserName() != "") {
+			queryStr.append(" and user_name like '%" + adminUser.getUserName()+"%'");
+		}
+		
+		if(adminUser.getPhone() != null && adminUser.getPhone() != "") {
+			queryStr.append(" and phone like '%" + adminUser.getPhone() +"%'");
+		}
+		
+		if(adminUser.getName() != null && adminUser.getName() != "") {
+			queryStr.append(" and name like '%"+ adminUser.getName() +"%'");
+		}
+		adminUser.setQueryStr(queryStr.toString());
+		return adminUserDao.selectByPage(adminUser);
+	}
+
+	@Override
+	public AdminUser selectByUserName(AdminUser adminUser) {
+		return adminUserDao.selectByUserName(adminUser);
+	}
+}

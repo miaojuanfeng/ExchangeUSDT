@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="../../css/frame/layui/css/layui.css">
+	<style type="text/css">
+		body{padding: 0px 10px;}
+	</style>
+	<script src="../../scripts/frame/layui/layui.js" charset="utf-8"></script>
+	<script src="../../scripts/page/order.js" charset="utf-8"></script>
+</head>
+<body>
+	<script type="text/html" id="barDemo">
+		<a class="layui-btn" href="#/ContactsImprove/admin/edit" lay-event="edit">补单</a>
+	</script>
+	<div class="layui-seach">
+		<div class="layui-form-item layui-form">
+			<div style="width: 100%;height: auto;display: -webkit-inline-box;">
+				<label class="layui-form-label">交易流水号</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" id="seach_tradeNumber" name="seach_tradeNumber"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">商户订单号</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" id="seach_outTradeNo" name="seach_outTradeNo"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">商户号</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" id="seach_merchantUserId" name="seach_merchantUserId"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">手机号</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" id="seach_phoneNumber" name="seach_phoneNumber"
+						autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">订单状态</label>
+				<div class="layui-input-inline" style="width: 130px;">
+					<select id="seach_type" name="seach_type"
+						class="layui-input layui-unselect">
+						<option value="">选择订单状态</option>
+						<option value="0">入金</option>
+						<option value="2">出金</option>
+					</select>
+				</div>
+				<label class="layui-form-label">支付方式</label>
+				<div class="layui-input-inline" style="width: 130px;">
+					<select id="seach_paymentTypeName" name="seach_paymentTypeName"
+						class="layui-input layui-unselect">
+						<option value="">选择支付方式</option>
+						<option value="支付宝">支付宝</option>
+						<option value="微信">微信</option>
+						<option value="银联">银联</option>
+					</select>
+				</div>
+			</div>
+			<div style="padding-top: 10px;width: 100%;height: auto;">
+				<label class="layui-form-label">支付状态</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<select id="seach_status" name="seach_status"
+						class="layui-input layui-unselect">
+						<option value="">选择支付状态</option>
+						<option value="0">未付款</option>
+						<option value="1">已付款</option>
+						<option value="2">已完成</option>
+						<option value="3">已取消</option>
+						<option value="4">申述中</option>
+					</select>
+				</div>
+				<label class="layui-form-label">回调状态</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<select id="seach_notifyStatus" name="seach_notifyStatus" class="layui-input layui-unselect">
+						<option value="">选择回调状态</option>
+						<option value="-1">未回调</option>						
+						<option value="0">回调中</option>
+						<option value="1">回调成功</option>
+						<option value="2">回调失败</option>
+					</select>
+				</div>
+				<label class="layui-form-label">创建时间</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" name="seach_createTime" id="seach_createTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">支付时间</label>
+				<div class="layui-input-inline" style="width: 150px;">
+					<input type="text" name="seach_paymentTime" id="seach_paymentTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">完成时间</label>
+				<div class="layui-input-inline" style="width: 130px;">
+					<input type="text" name="seach_closeTime" id="seach_closeTime"
+						lay-verify="date" autocomplete="off" class="layui-input">
+				</div>
+				<label class="layui-form-label">交易类型</label>
+				<div class="layui-input-inline" style="width: 140px;">
+				<select id="seach_dealType" name="seach_dealType" class="layui-input layui-unselect">
+									<option value="">选择交易类型</option>
+									<option value="0">正常交易</option>						
+									<option value="1">补单交易</option>
+				</select>
+				</div>		
+				<label class="layui-form-label">&nbsp;</label>	
+				<div class="layui-input-inline" style="width: 30px;padding-top:18px;">
+					<button class="layui-btn layui-btn-primary layui-btn-sm"
+						data-type="reload">
+						<i class="layui-icon">&#xe615;</i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<table class="layui-hide" id="order" lay-filter="order"></table>	
+	<form class="layui-form" action="" id="moneyusers_example" lay-filter="adminUser_example" hidden="hidden">
+		<input hidden="hidden" name="tradeNumber" id="tradeNumber">
+		<div style="padding: 10px 10px;">
+			<div class="layui-form-item">
+				<label class="layui-form-label">商户号</label>
+				<div class="layui-input-inline">
+					<input type="text" id="merchantUserId" name="merchantUserId" lay-verify="required" autocomplete="off" class="layui-input" readonly="readonly">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">币商id</label>
+				<div class="layui-input-inline">
+					<input type="text" id="userId" lay-verify="required" autocomplete="off" class="layui-input" readonly="readonly">
+				</div>
+			</div>		
+			<div class="layui-form-item">
+				<label class="layui-form-label">补单价钱</label>
+				<div class="layui-input-inline">
+					<input type="text" id="amount" name="amount" lay-verify="required" autocomplete="off" class="layui-input">
+				</div>
+			</div>
+		</div>
+	</form>	
+</body>
+</html>	

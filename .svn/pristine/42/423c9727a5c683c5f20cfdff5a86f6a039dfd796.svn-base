@@ -1,0 +1,79 @@
+package com.contactsImprove.service.api.impl;
+
+import java.math.BigDecimal;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.contactsImprove.dao.api.UserWalletDao;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.service.api.UserWalletService;
+
+@Service("userWalletService")
+public class UserWalletServiceImpl implements UserWalletService {
+	
+	@Autowired
+	UserWalletDao userWalletDao;
+
+	@Override
+	public int deleteByPrimaryKey(Long walletId) {
+		// TODO Auto-generated method stub
+		return userWalletDao.deleteByPrimaryKey(walletId);
+	}
+
+	@Override
+	public int insert(UserWallet record) {
+		// TODO Auto-generated method stub
+		return userWalletDao.insert(record);
+	}
+
+	@Override
+	public int insertSelective(UserWallet record) {
+		// TODO Auto-generated method stub
+		return userWalletDao.insertSelective(record);
+	}
+
+	@Override
+	public UserWallet selectByPrimaryKey(Long walletId) {
+		// TODO Auto-generated method stub
+		return userWalletDao.selectByPrimaryKey(walletId);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(UserWallet record) {
+		// TODO Auto-generated method stub
+		return userWalletDao.updateByPrimaryKeySelective(record);
+	}
+
+	@Override
+	public UserWallet findByLock(Long UserId, String currencyType) {
+		// TODO Auto-generated method stub
+		return userWalletDao.findByLock(UserId, currencyType);
+	}
+
+	@Override
+	public List<UserWallet> selectUserWalletByCurrencyAmount(BigDecimal currencyAmount,Integer maxNumber) {
+		// TODO Auto-generated method stub
+		return userWalletDao.selectUserWalletByCurrencyAmount(currencyAmount,maxNumber);
+	}
+
+	@Override
+	public UserWallet selectByType(Long UserId, String currencyType) {
+		// TODO Auto-generated method stub
+		return userWalletDao.selectByType(UserId, currencyType);
+	}
+
+	@Override
+	public List<UserWallet> selectUserWalletByCurrencyAmountAndType(BigDecimal currencyAmount, Integer maxNumber,
+			Byte paymentType) {
+		// TODO Auto-generated method stub
+		return userWalletDao.selectUserWalletByCurrencyAmountAndType(currencyAmount, maxNumber, paymentType);
+	}
+
+	@Override
+	public List<UserWallet> selectUserWallerList() {
+		// TODO Auto-generated method stub
+		return userWalletDao.selectUserWallerList();
+	}
+
+	
+}

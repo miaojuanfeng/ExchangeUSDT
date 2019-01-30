@@ -1,0 +1,26 @@
+package com.contactsImprove.dao.api;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import com.contactsImprove.entity.api.PaymentMode;
+
+public interface PaymentModeDao {
+    int deleteByPrimaryKey(Long paymentId);
+
+    int insertSelective(PaymentMode record);
+
+    PaymentMode selectByPrimaryKey(Long paymentId);
+
+    int updateByPrimaryKeySelective(PaymentMode record);
+    
+    int setPaymentDefault(@Param("paymentId")Long paymentId,@Param("userId")Long userId);
+    
+    List<PaymentMode> selectPayementList(@Param("userId")Long userId);
+             
+    List<PaymentMode> selectPayementModeByType(@Param("userId")Long userId,@Param("paymentType")Byte paymentType);
+    
+    PaymentMode selectPayementModeByTypeDefault(@Param("userId")Long userId);
+    
+} 

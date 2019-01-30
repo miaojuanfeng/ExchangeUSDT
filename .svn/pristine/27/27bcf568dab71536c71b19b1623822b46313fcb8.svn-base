@@ -1,0 +1,29 @@
+package com.contactsImprove.service.api;
+
+import java.util.List;
+
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.utils.PageUtil;
+
+public interface OrdersService {
+	
+    int deleteByPrimaryKey(String tradeNumber);
+
+    int insert(Orders record);
+
+    int insertSelective(Orders record);
+
+    Orders selectByPrimaryKey(String tradeNumber);
+
+    int updateByPrimaryKeySelective(Orders record);
+
+    Integer updateOrderTimeoutById(String orderIds);
+
+    List<Orders> refineTimeoutOrder(Integer timeOut);
+
+    List<Orders> selectPageByMerchantUserId(Byte status ,Long merchantUserId, PageUtil pageUtil);
+    
+    List<Orders> selectPageBytUserId(Byte status,Long userId,PageUtil pageUtil);
+    
+    List<Orders> selectByOrderList(Orders record);
+}

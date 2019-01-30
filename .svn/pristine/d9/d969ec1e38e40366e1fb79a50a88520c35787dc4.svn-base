@@ -1,0 +1,40 @@
+package com.contactsImprove.utils;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+
+public class OrderUtil {
+	
+	static int appId=1000000;
+	
+	static byte[] lock=new byte[0];
+	
+	public static String createParaOrderStr(TreeMap<String, String> paramap){
+	    StringBuilder sbkey = new StringBuilder();
+	    Set es = paramap.entrySet();  
+		Iterator it = es.iterator();
+	    while(it.hasNext()) {
+	        Map.Entry entry = (Map.Entry)it.next();
+	        String k = (String)entry.getKey();
+	        Object v = entry.getValue();
+	        //空值不需要
+	        if(null != v && !"".equals(v)) {
+	            sbkey.append(k + "=" + v + "&");
+	        }
+	    }
+	    return sbkey.toString().substring(0,sbkey.length()-1);
+	}
+	
+	public static String createAppId() {
+		String uuId=UUID.randomUUID().toString();
+		uuId=uuId.substring(0, 17).replace("-", "");
+		synchronized(lock) {
+			appId++;
+		}				
+		return uuId+appId;		
+	}
+
+}

@@ -1,0 +1,75 @@
+package com.contactsImprove.service.api.impl;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.contactsImprove.dao.api.JournalAccountDao;
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.entity.api.UserWallet;
+import com.contactsImprove.service.api.JournalAccountService;
+
+
+@Service("journalAccountService")
+public class JournalAccountServiceImpl implements JournalAccountService{
+	
+	@Autowired
+	JournalAccountDao journalAccountDao;
+
+	@Override
+	public int deleteByPrimaryKey(Long journalAccountId) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.deleteByPrimaryKey(journalAccountId);
+	}
+
+	@Override
+	public int insert(JournalAccount record) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.insert(record);
+	}
+
+	@Override
+	public int insertSelective(JournalAccount record) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.insertSelective(record);
+	}
+
+	@Override
+	public JournalAccount selectByPrimaryKey(Long journalAccountId) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.selectByPrimaryKey(journalAccountId);
+	}
+
+	@Override
+	public int updateByPrimaryKeySelective(JournalAccount record) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.updateByPrimaryKeySelective(record);
+	}
+
+
+	@Override
+	public List<JournalAccount> selectByUserId(Long userId) {
+		// TODO Auto-generated method stub
+		return journalAccountDao.selectByUserId(userId);
+	}
+
+	@Override
+	public int logAccountChange(UserWallet oldUw, UserWallet newUw, String remark,BigDecimal changeAmount) {
+		
+		JournalAccount ja=new JournalAccount();	    
+	    ja.setUserId(oldUw.getUserId());
+	    ja.setChangeAmount(changeAmount);
+	    ja.setCurrencyNumberBefore(oldUw.getCurrencyNumber());
+	    ja.setCurrencyNumberAfter(newUw.getCurrencyNumber());
+	    ja.setFreezeNumberBefore(oldUw.getFreezeNumber());
+	    ja.setFreezeNumberAfter(newUw.getFreezeNumber());
+	    ja.setCreateTime(new Date());
+	    ja.setRemark(remark);	    
+				
+		return journalAccountDao.insert(ja);
+	}
+
+}

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.contactsImprove.dao.api.PaymentModeDao">
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.PaymentMode">
+    <id column="payment_id" jdbcType="BIGINT" property="paymentId" />
+    <result column="user_id" jdbcType="BIGINT" property="userId" />
+    <result column="payment_type" jdbcType="TINYINT" property="paymentType" />
+    <result column="payment_number" jdbcType="VARCHAR" property="paymentNumber" />
+    <result column="payment_name" jdbcType="VARCHAR" property="paymentName" />
+    <result column="payment_image" jdbcType="VARCHAR" property="paymentImage" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="payment_default" jdbcType="TINYINT" property="paymentDefault" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    payment_id, user_id, payment_type, payment_number, payment_name, payment_image, user_name, 
+    payment_default, status, create_time, remark
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from payment_mode
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </select>
+  <select id="selectPayementModeByType" resultMap="BaseResultMap" >
+    select 
+    <include refid="Base_Column_List" />
+    from payment_mode
+    where user_id = #{userId,jdbcType=BIGINT} and payment_type=#{paymentType,jdbcType=TINYINT} and status=1
+  </select>  
+  <select id="selectPayementModeByTypeDefault" resultMap="BaseResultMap" >
+    select 
+    <include refid="Base_Column_List" />
+    from payment_mode
+    where user_id = #{userId,jdbcType=BIGINT} and status=1 and payment_default=1
+  </select>      
+    
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from payment_mode
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.contactsImprove.entity.api.PaymentMode">
+    insert into payment_mode (payment_id, user_id, payment_type, 
+      payment_number, payment_name, payment_image, 
+      user_name, payment_default, status, 
+      create_time, remark)
+    values (#{paymentId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{paymentType,jdbcType=TINYINT}, 
+      #{paymentNumber,jdbcType=VARCHAR}, #{paymentName,jdbcType=VARCHAR}, #{paymentImage,jdbcType=VARCHAR}, 
+      #{userName,jdbcType=VARCHAR}, #{paymentDefault,jdbcType=TINYINT}, #{status,jdbcType=TINYINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.PaymentMode">
+    insert into payment_mode
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="paymentId != null">
+        payment_id,
+      </if>
+      <if test="userId != null">
+        user_id,
+      </if>
+      <if test="paymentType != null">
+        payment_type,
+      </if>
+      <if test="paymentNumber != null">
+        payment_number,
+      </if>
+      <if test="paymentName != null">
+        payment_name,
+      </if>
+      <if test="paymentImage != null">
+        payment_image,
+      </if>
+      <if test="userName != null">
+        user_name,
+      </if>
+      <if test="paymentDefault != null">
+        payment_default,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="remark != null">
+        remark,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="paymentId != null">
+        #{paymentId,jdbcType=BIGINT},
+      </if>
+      <if test="userId != null">
+        #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="paymentType != null">
+        #{paymentType,jdbcType=TINYINT},
+      </if>
+      <if test="paymentNumber != null">
+        #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null">
+        #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentImage != null">
+        #{paymentImage,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null">
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentDefault != null">
+        #{paymentDefault,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remark != null">
+        #{remark,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.PaymentMode">
+    update payment_mode
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="paymentType != null">
+        payment_type = #{paymentType,jdbcType=TINYINT},
+      </if>
+      <if test="paymentNumber != null">
+        payment_number = #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null">
+        payment_name = #{paymentName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentImage != null">
+        payment_image = #{paymentImage,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null">
+        user_name = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentDefault != null">
+        payment_default = #{paymentDefault,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remark != null">
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.contactsImprove.entity.api.PaymentMode">
+    update payment_mode
+    set user_id = #{userId,jdbcType=BIGINT},
+      payment_type = #{paymentType,jdbcType=TINYINT},
+      payment_number = #{paymentNumber,jdbcType=VARCHAR},
+      payment_name = #{paymentName,jdbcType=VARCHAR},
+      payment_image = #{paymentImage,jdbcType=VARCHAR},
+      user_name = #{userName,jdbcType=VARCHAR},
+      payment_default = #{paymentDefault,jdbcType=TINYINT},
+      status = #{status,jdbcType=TINYINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      remark = #{remark,jdbcType=VARCHAR}
+    where payment_id = #{paymentId,jdbcType=BIGINT}
+  </update>
+</mapper>

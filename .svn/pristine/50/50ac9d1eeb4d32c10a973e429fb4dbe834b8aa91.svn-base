@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.JournalAccountDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.JournalAccount" >
+    <id column="journal_account_id" property="journalAccountId" jdbcType="BIGINT" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="change_amount" property="changeAmount" jdbcType="DECIMAL" />
+    <result column="currency_number_before" property="currencyNumberBefore" jdbcType="DECIMAL" />
+    <result column="currency_number_after" property="currencyNumberAfter" jdbcType="DECIMAL" />
+    <result column="freeze_number_before" property="freezeNumberBefore" jdbcType="DECIMAL" />
+    <result column="freeze_number_after" property="freezeNumberAfter" jdbcType="DECIMAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="type" property="type" jdbcType="TINYINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="currency_type" property="currencyType" jdbcType="TINYINT" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    journal_account_id, user_id, change_amount, currency_number_before, currency_number_after, 
+    freeze_number_before, freeze_number_after, create_time, type, remark,currency_type
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from journal_account
+    where journal_account_id = #{journalAccountId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from journal_account
+    where journal_account_id = #{journalAccountId,jdbcType=BIGINT}
+  </delete>
+  <select id="selectByUserId" resultMap="BaseResultMap" parameterType="com.contactsImprove.utils.PageUtil"
+  	statementType="CALLABLE">
+  		CALL selectByPage(#{queryStr},#{pageNumber,mode=IN,jdbcType=INTEGER},#{pageSize,mode=IN,jdbcType=INTEGER},#{pageTotal,mode=OUT,jdbcType=INTEGER})
+  </select>
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.JournalAccount" >
+    insert into journal_account
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="journalAccountId != null" >
+        journal_account_id,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="changeAmount != null" >
+        change_amount,
+      </if>
+      <if test="currencyNumberBefore != null" >
+        currency_number_before,
+      </if>
+      <if test="currencyNumberAfter != null" >
+        currency_number_after,
+      </if>
+      <if test="freezeNumberBefore != null" >
+        freeze_number_before,
+      </if>
+      <if test="freezeNumberAfter != null" >
+        freeze_number_after,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      <if test="currencyType != null" >
+        currency_type,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="journalAccountId != null" >
+        #{journalAccountId,jdbcType=BIGINT},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="changeAmount != null" >
+        #{changeAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="currencyNumberBefore != null" >
+        #{currencyNumberBefore,jdbcType=DECIMAL},
+      </if>
+      <if test="currencyNumberAfter != null" >
+        #{currencyNumberAfter,jdbcType=DECIMAL},
+      </if>
+      <if test="freezeNumberBefore != null" >
+        #{freezeNumberBefore,jdbcType=DECIMAL},
+      </if>
+      <if test="freezeNumberAfter != null" >
+        #{freezeNumberAfter,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=TINYINT},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyType != null" >
+        #{currencyType,jdbcType=TINYINT},
+      </if>      
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.JournalAccount" >
+    update journal_account
+    <set >
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="changeAmount != null" >
+        change_amount = #{changeAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="currencyNumberBefore != null" >
+        currency_number_before = #{currencyNumberBefore,jdbcType=DECIMAL},
+      </if>
+      <if test="currencyNumberAfter != null" >
+        currency_number_after = #{currencyNumberAfter,jdbcType=DECIMAL},
+      </if>
+      <if test="freezeNumberBefore != null" >
+        freeze_number_before = #{freezeNumberBefore,jdbcType=DECIMAL},
+      </if>
+      <if test="freezeNumberAfter != null" >
+        freeze_number_after = #{freezeNumberAfter,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=TINYINT},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyType != null" >
+       currency_type= #{currencyType,jdbcType=TINYINT},
+      </if>         
+    </set>
+    where journal_account_id = #{journalAccountId,jdbcType=BIGINT}
+  </update>
+  
+   <insert id="insertBatch">
+  		INSERT INTO journal_account(user_id, change_amount,currency_number_before, currency_number_after, freeze_number_before, freeze_number_after,create_time,type,remark,currency_type)
+  		VALUES
+  		<foreach collection="list" item="item" index="index" separator=",">
+  		(#{item.userId},#{item.changeAmount},#{item.currencyNumberBefore},#{item.currencyNumberAfter},#{item.freezeNumberBefore},#{item.freezeNumberAfter},#{item.createTime},#{item.type},#{item.remark},#{item.currencyType})
+  		</foreach>
+  	</insert>  
+  
+</mapper>

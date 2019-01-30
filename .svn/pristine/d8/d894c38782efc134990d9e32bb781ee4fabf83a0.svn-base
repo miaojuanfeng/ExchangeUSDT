@@ -1,0 +1,115 @@
+package com.contactsImprove.entity.api;
+
+import java.util.Date;
+
+public class MerchantNotify {
+    private String tradeNumber;
+
+    private Long merchantUserId;
+
+    private Byte notifyStatus;
+
+    private Byte nofityNum;
+
+    private Integer slotIndex;
+
+    private Integer slotInterval;
+
+    private String notifyParam;
+
+    private Date createTime;
+
+    private Date updateTime;
+
+    private String remark;
+    
+    private String privateKey;
+
+    public String getPrivateKey() {
+		return privateKey;
+	}
+
+	public void setPrivateKey(String privateKey) {
+		this.privateKey = privateKey;
+	}
+
+	public String getTradeNumber() {
+        return tradeNumber;
+    }
+
+    public void setTradeNumber(String tradeNumber) {
+        this.tradeNumber = tradeNumber == null ? null : tradeNumber.trim();
+    }
+
+    public Long getMerchantUserId() {
+        return merchantUserId;
+    }
+
+    public void setMerchantUserId(Long merchantUserId) {
+        this.merchantUserId = merchantUserId;
+    }
+
+    public Byte getNotifyStatus() {
+        return notifyStatus;
+    }
+
+    public void setNotifyStatus(Byte notifyStatus) {
+        this.notifyStatus = notifyStatus;
+    }
+
+    public Byte getNofityNum() {
+        return nofityNum;
+    }
+
+    public void setNofityNum(Byte nofityNum) {
+        this.nofityNum = nofityNum;
+    }
+
+    public Integer getSlotIndex() {
+        return slotIndex;
+    }
+
+    public void setSlotIndex(Integer slotIndex) {
+        this.slotIndex = slotIndex;
+    }
+
+    public Integer getSlotInterval() {
+        return slotInterval;
+    }
+
+    public void setSlotInterval(Integer slotInterval) {
+        this.slotInterval = slotInterval;
+    }
+
+    public String getNotifyParam() {
+        return notifyParam;
+    }
+
+    public void setNotifyParam(String notifyParam) {
+        this.notifyParam = notifyParam == null ? null : notifyParam.trim();
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark == null ? null : remark.trim();
+    }
+}

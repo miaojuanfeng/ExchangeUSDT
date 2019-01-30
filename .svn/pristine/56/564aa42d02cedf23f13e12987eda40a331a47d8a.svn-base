@@ -1,0 +1,44 @@
+package com.contactsImprove.constant;
+
+import java.math.BigDecimal;
+
+public class SystemConst {
+	/**
+	 * 订单付款超时时间
+	 */
+	public static final int Order_TimeOut=15*60;//单位：秒.
+	/**
+	 * 版本号
+	 */
+	public static final String version="1.0";
+	/**
+	 * 随机获取最大币商数。
+	 */
+	public static final int random_limit=30;
+	/**\
+	 * 用户登入后的回话key
+	 */
+	public static final String sessionId="userId";
+	/**
+	 * 币种USDT
+	 */
+	public static final String USDT="USDT";
+	
+	/**
+	 * CNY
+	 */
+	public static final String CNY="CNY";	
+	/**
+	 * 短信key .
+	 */
+	public static final String SMSKey="SMS";
+	/**
+	 * 手续费
+	 */
+	public static final BigDecimal poundage=new BigDecimal("0.01");	
+	/**
+	 * 第一次回调标示
+	 */
+	public static final int fisrtNotify=-1;
+
+}

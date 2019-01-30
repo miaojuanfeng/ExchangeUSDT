@@ -1,0 +1,170 @@
+package com.contactsImprove.entity.api;
+
+import java.math.BigDecimal;
+
+public class NotifyPara {
+			
+	Long merchantUserId;//商户号
+	String outTradeNo ;//商户订单号out_trade_no
+	private BigDecimal amount;//订单金额
+	private BigDecimal currencyAmount;//币的数量
+	String merchantAccount;//商户的用户账号
+	String currencyType ;// 币种类型
+	Long paymentId;//支付方式id
+	String paymentType;//支付类型
+	String sign ;// 签名 
+	String tradeNumber;//交易流水号		
+	String tradeStatus ;//交易状态	失败：TRADE_FAIL ,成功：TRADE_SUCCESS。
+	String gmtCreate ;// 交易创建时间 yyyy-MM-dd HH:mm:ss 格式字符串
+	String gmtPayment;// 交易支付时间yyyy-MM-dd HH:mm:ss 格式字符串
+	String gmtClose;// 交易完成时间yyyy-MM-dd HH:mm:ss 格式字符串
+	String notifyUrl;
+	String fromAddress;
+	String toAddress;
+	private Byte dealType;
+    private BigDecimal actualCurrencyAmount;//实际到账
+    private BigDecimal poundage;//手续费
+    private BigDecimal merchantRate;//本次订单商户费率
+    private BigDecimal underwriterRate;//本次订单币商费率
+    private BigDecimal actualAmount;//实际收款
+		
+	public BigDecimal getActualAmount() {
+		return actualAmount;
+	}
+	public void setActualAmount(BigDecimal actualAmount) {
+		this.actualAmount = actualAmount;
+	}
+	public BigDecimal getActualCurrencyAmount() {
+		return actualCurrencyAmount;
+	}
+	public void setActualCurrencyAmount(BigDecimal actualCurrencyAmount) {
+		this.actualCurrencyAmount = actualCurrencyAmount;
+	}
+	public BigDecimal getPoundage() {
+		return poundage;
+	}
+	public void setPoundage(BigDecimal poundage) {
+		this.poundage = poundage;
+	}
+	public BigDecimal getMerchantRate() {
+		return merchantRate;
+	}
+	public void setMerchantRate(BigDecimal merchantRate) {
+		this.merchantRate = merchantRate;
+	}
+	public BigDecimal getUnderwriterRate() {
+		return underwriterRate;
+	}
+	public void setUnderwriterRate(BigDecimal underwriterRate) {
+		this.underwriterRate = underwriterRate;
+	}
+	public Byte getDealType() {
+		return dealType;
+	}
+	public void setDealType(Byte dealType) {
+		this.dealType = dealType;
+	}
+	public String getFromAddress() {
+		return fromAddress;
+	}
+	public void setFromAddress(String fromAddress) {
+		this.fromAddress = fromAddress;
+	}
+	public String getToAddress() {
+		return toAddress;
+	}
+	public void setToAddress(String toAddress) {
+		this.toAddress = toAddress;
+	}
+	public String getMerchantAccount() {
+		return merchantAccount;
+	}
+	public void setMerchantAccount(String merchantAccount) {
+		this.merchantAccount = merchantAccount;
+	}
+	public Long getPaymentId() {
+		return paymentId;
+	}
+	public void setPaymentId(Long paymentId) {
+		this.paymentId = paymentId;
+	}
+	public String getNotifyUrl() {
+		return notifyUrl;
+	}
+	public void setNotifyUrl(String notifyUrl) {
+		this.notifyUrl = notifyUrl;
+	}
+	public String getOutTradeNo() {
+		return outTradeNo;
+	}
+	public void setOutTradeNo(String outTradeNo) {
+		this.outTradeNo = outTradeNo;
+	}
+	public String getSign() {
+		return sign;
+	}
+	public void setSign(String sign) {
+		this.sign = sign;
+	}
+	public String getTradeStatus() {
+		return tradeStatus;
+	}
+	public void setTradeStatus(String tradeStatus) {
+		this.tradeStatus = tradeStatus;
+	}
+	public String getGmtCreate() {
+		return gmtCreate;
+	}
+	public void setGmtCreate(String gmtCreate) {
+		this.gmtCreate = gmtCreate;
+	}
+	public String getGmtPayment() {
+		return gmtPayment;
+	}
+	public void setGmtPayment(String gmtPayment) {
+		this.gmtPayment = gmtPayment;
+	}
+	public String getGmtClose() {
+		return gmtClose;
+	}
+	public void setGmtClose(String gmtClose) {
+		this.gmtClose = gmtClose;
+	}
+	public String getTradeNumber() {
+		return tradeNumber;
+	}
+	public void setTradeNumber(String tradeNumber) {
+		this.tradeNumber = tradeNumber;
+	}
+	public BigDecimal getAmount() {
+		return amount;
+	}
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
+	}
+	public BigDecimal getCurrencyAmount() {
+		return currencyAmount;
+	}
+	public void setCurrencyAmount(BigDecimal currencyAmount) {
+		this.currencyAmount = currencyAmount;
+	}
+	public String getCurrencyType() {
+		return currencyType;
+	}
+	public void setCurrencyType(String currencyType) {
+		this.currencyType = currencyType;
+	}
+	public String getPaymentType() {
+		return paymentType;
+	}
+	public void setPaymentType(String paymentType) {
+		this.paymentType = paymentType;
+	}
+	public Long getMerchantUserId() {
+		return merchantUserId;
+	}
+	public void setMerchantUserId(Long merchantUserId) {
+		this.merchantUserId = merchantUserId;
+	}
+	
+}

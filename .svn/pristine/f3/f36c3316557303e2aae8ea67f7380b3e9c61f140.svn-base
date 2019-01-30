@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.OrdersDao" >
+  <resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.Orders" >
+    <id column="trade_number" property="tradeNumber" jdbcType="CHAR" />
+	<result column="trade_fnumber" property="tradeFnumber" jdbcType="CHAR" />    
+    <result column="out_trade_no" property="outTradeNo" jdbcType="VARCHAR" />
+    <result column="merchant_user_id" property="merchantUserId" jdbcType="BIGINT" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="merchant_account" property="merchantAccount" jdbcType="VARCHAR" />
+    <result column="payment_id" property="paymentId" jdbcType="BIGINT" />
+    <result column="payment_type_name" property="paymentTypeName" jdbcType="VARCHAR" />
+    <result column="payment_number" property="paymentNumber" jdbcType="VARCHAR" />
+    <result column="payment_name" property="paymentName" jdbcType="VARCHAR" />
+    <result column="payment_number_suffix" property="paymentNumberSuffix" jdbcType="VARCHAR" />
+    <result column="currency_type" property="currencyType" jdbcType="VARCHAR" />
+    <result column="currency_amount" property="currencyAmount" jdbcType="DECIMAL" />
+    <result column="exchange_rate" property="exchangeRate" jdbcType="DECIMAL" />
+    <result column="amount" property="amount" jdbcType="DECIMAL" />
+    <result column="actual_amount" property="actualAmount" jdbcType="DECIMAL" />
+    <result column="preferential_amount" property="preferentialAmount" jdbcType="DECIMAL" />    
+ 	<result column="actual_currency_amount" property="actualCurrencyAmount" jdbcType="DECIMAL" />
+    <result column="poundage" property="poundage" jdbcType="DECIMAL" />
+    <result column="merchant_rate" property="merchantRate" jdbcType="DECIMAL" />
+    <result column="underwriter_rate" property="underwriterRate" jdbcType="DECIMAL" />    
+    <result column="from_address" property="fromAddress" jdbcType="VARCHAR" />
+    <result column="to_address" property="toAddress" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="TINYINT" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+    <result column="deal_type" property="dealType" jdbcType="TINYINT" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="payment_time" property="paymentTime" jdbcType="TIMESTAMP" />
+    <result column="close_time" property="closeTime" jdbcType="TIMESTAMP" />
+    <result column="version" property="version" jdbcType="VARCHAR" />
+    <result column="subject" property="subject" jdbcType="VARCHAR" />
+    <result column="body" property="body" jdbcType="VARCHAR" />
+    <result column="notify_url" property="notifyUrl" jdbcType="VARCHAR" />
+    <result column="notify_status" property="notifyStatus" jdbcType="TINYINT" />
+    <result column="ext" property="ext" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    trade_number, trade_fnumber, out_trade_no, merchant_user_id, user_id, merchant_account, 
+    payment_id, payment_type_name, payment_number,payment_name,payment_number_suffix, currency_type, currency_amount, exchange_rate, 
+    amount,actual_amount, preferential_amount,actual_currency_amount, poundage, merchant_rate, underwriter_rate, from_address, to_address, type, status, deal_type, create_time, payment_time, 
+    close_time, version, subject, body, notify_url, notify_status, ext
+  </sql>
+  
+  <select id="selectSumOrderByPara" parameterType="java.lang.String" resultType="java.util.Map">
+  	${value}
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from orders
+    where trade_number = #{tradeNumber,jdbcType=CHAR}
+  </select>  
+  
+  <select id="selectOrderByMerchantUserId" resultMap="BaseResultMap" >
+    select 
+    <include refid="Base_Column_List" />
+    from orders
+    where merchant_user_id = #{merchantUserId,jdbcType=BIGINT} and out_trade_no=#{outTradeNo,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="selectListByOrderId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from orders
+    where type=2 and status=3 and notify_status=-1 and trade_number in(#{orderIds,jdbcType=CHAR})
+  </select>  
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from orders
+    where trade_number = #{tradeNumber,jdbcType=CHAR}
+  </delete>
+  
+  <insert id="insertSelective" parameterType="com.contactsImprove.entity.api.Orders" >
+    insert into orders
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="tradeNumber != null" >
+        trade_number,
+      </if>
+      <if test="tradeFnumber != null" >
+        trade_fnumber,
+      </if>
+      <if test="outTradeNo != null" >
+        out_trade_no,
+      </if>
+      <if test="merchantUserId != null" >
+        merchant_user_id,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="merchantAccount != null" >
+        merchant_account,
+      </if>
+      <if test="paymentId != null" >
+        payment_id,
+      </if>
+      <if test="paymentTypeName != null" >
+        payment_type_name,
+      </if>
+      <if test="paymentNumber != null" >
+        payment_number,
+      </if>
+      <if test="paymentName != null" >
+        payment_name,
+      </if>      
+      <if test="paymentNumberSuffix != null" >
+        payment_number_suffix,
+      </if>      
+      <if test="currencyType != null" >
+        currency_type,
+      </if>
+      <if test="currencyAmount != null" >
+        currency_amount,
+      </if>
+      <if test="exchangeRate != null" >
+        exchange_rate,
+      </if>
+      <if test="amount != null" >
+        amount,
+      </if>
+      <if test="actualAmount != null" >
+        actual_amount,
+      </if>
+      <if test="preferentialAmount != null" >
+        preferential_amount,
+      </if>      
+      <if test="actualCurrencyAmount != null" >
+        actual_currency_amount,
+      </if>
+      <if test="poundage != null" >
+        poundage,
+      </if>
+      <if test="merchantRate != null" >
+        merchant_rate,
+      </if>
+      <if test="underwriterRate != null" >
+        underwriter_rate,
+      </if>      
+      <if test="fromAddress != null" >
+        from_address,
+      </if>
+      <if test="toAddress != null" >
+        to_address,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="dealType != null" >
+        deal_type,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="paymentTime != null" >
+        payment_time,
+      </if>
+      <if test="closeTime != null" >
+        close_time,
+      </if>
+      <if test="version != null" >
+        version,
+      </if>
+      <if test="subject != null" >
+        subject,
+      </if>
+      <if test="body != null" >
+        body,
+      </if>
+      <if test="notifyUrl != null" >
+        notify_url,
+      </if>
+      <if test="notifyStatus != null" >
+        notify_status,
+      </if>
+      <if test="ext != null" >
+        ext,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="tradeNumber != null" >
+        #{tradeNumber,jdbcType=CHAR},
+      </if>
+      <if test="tradeFnumber != null" >
+        #{tradeFnumber,jdbcType=CHAR},
+      </if>
+      <if test="outTradeNo != null" >
+        #{outTradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantUserId != null" >
+        #{merchantUserId,jdbcType=BIGINT},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="merchantAccount != null" >
+        #{merchantAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentId != null" >
+        #{paymentId,jdbcType=BIGINT},
+      </if>
+      <if test="paymentTypeName != null" >
+        #{paymentTypeName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentNumber != null" >
+        #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null" >
+        #{paymentName,jdbcType=VARCHAR},
+      </if>      
+      <if test="paymentNumberSuffix != null" >
+        #{paymentNumberSuffix,jdbcType=VARCHAR},
+      </if>      
+      <if test="currencyType != null" >
+        #{currencyType,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyAmount != null" >
+        #{currencyAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="exchangeRate != null" >
+        #{exchangeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="amount != null" >
+        #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null" >
+        #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="preferentialAmount != null" >
+        #{preferentialAmount,jdbcType=DECIMAL},
+      </if>      
+	  <if test="actualCurrencyAmount != null" >
+		#{actualCurrencyAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="poundage != null" >
+        #{poundage,jdbcType=DECIMAL},
+      </if>
+      <if test="merchantRate != null" >
+        #{merchantRate,jdbcType=DECIMAL},
+      </if>
+      <if test="underwriterRate != null" >
+        #{underwriterRate,jdbcType=DECIMAL},
+      </if>      
+      <if test="fromAddress != null" >
+        #{fromAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="toAddress != null" >
+        #{toAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="dealType != null" >
+        #{dealType,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="paymentTime != null" >
+        #{paymentTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="closeTime != null" >
+        #{closeTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="version != null" >
+        #{version,jdbcType=VARCHAR},
+      </if>
+      <if test="subject != null" >
+        #{subject,jdbcType=VARCHAR},
+      </if>
+      <if test="body != null" >
+        #{body,jdbcType=VARCHAR},
+      </if>
+      <if test="notifyUrl != null" >
+        #{notifyUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="notifyStatus != null" >
+        #{notifyStatus,jdbcType=TINYINT},
+      </if>
+      <if test="ext != null" >
+        #{ext,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  
+ <update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.Orders" >
+    update orders
+    <set >
+      <if test="tradeFnumber != null" >
+        trade_fnumber = #{tradeFnumber,jdbcType=CHAR},
+      </if>
+      <if test="outTradeNo != null" >
+        out_trade_no = #{outTradeNo,jdbcType=VARCHAR},
+      </if>
+      <if test="merchantUserId != null" >
+        merchant_user_id = #{merchantUserId,jdbcType=BIGINT},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="merchantAccount != null" >
+        merchant_account = #{merchantAccount,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentId != null" >
+        payment_id = #{paymentId,jdbcType=BIGINT},
+      </if>
+      <if test="paymentTypeName != null" >
+        payment_type_name = #{paymentTypeName,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentNumber != null" >
+        payment_number = #{paymentNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentName != null" >
+        payment_name = #{paymentName,jdbcType=VARCHAR},
+      </if>    
+      <if test="paymentNumberSuffix != null" >
+        payment_number_suffix = #{paymentNumberSuffix,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyType != null" >
+        currency_type = #{currencyType,jdbcType=VARCHAR},
+      </if>
+      <if test="currencyAmount != null" >
+        currency_amount = #{currencyAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="exchangeRate != null" >
+        exchange_rate = #{exchangeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="amount != null" >
+        amount = #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null" >
+        actual_amount = #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="preferentialAmount != null" >
+        preferential_amount = #{preferentialAmount,jdbcType=DECIMAL},
+      </if>      
+      <if test="actualCurrencyAmount != null" >
+        actual_currency_amount = #{actualCurrencyAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="poundage != null" >
+        poundage = #{poundage,jdbcType=DECIMAL},
+      </if>
+      <if test="merchantRate != null" >
+        merchant_rate = #{merchantRate,jdbcType=DECIMAL},
+      </if>
+      <if test="underwriterRate != null" >
+        underwriter_rate = #{underwriterRate,jdbcType=DECIMAL},
+      </if>      
+      <if test="fromAddress != null" >
+        from_address = #{fromAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="toAddress != null" >
+        to_address = #{toAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="dealType != null" >
+        deal_type = #{dealType,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="paymentTime != null" >
+        payment_time = #{paymentTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="closeTime != null" >
+        close_time = #{closeTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="version != null" >
+        version = #{version,jdbcType=VARCHAR},
+      </if>
+      <if test="subject != null" >
+        subject = #{subject,jdbcType=VARCHAR},
+      </if>
+      <if test="body != null" >
+        body = #{body,jdbcType=VARCHAR},
+      </if>
+      <if test="notifyUrl != null" >
+        notify_url = #{notifyUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="notifyStatus != null" >
+        notify_status = #{notifyStatus,jdbcType=TINYINT},
+      </if>
+      <if test="ext != null" >
+        ext = #{ext,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where trade_number = #{tradeNumber,jdbcType=CHAR}
+  </update>
+  
+  <update id="updateBatchNotifyStatus" parameterType="java.util.List">
+	UPDATE orders
+	<trim prefix="set" suffixOverrides=",">
+	    <trim prefix="notify_status =case" suffix="end,">
+	        <foreach collection="list" item="item" index="index">
+	        	<if test="item.tradeNumber !=null and item.notifyStatus!=null">
+	            	when trade_number=#{item.tradeNumber} then #{item.notifyStatus}
+	            </if>
+	        </foreach>
+	    </trim>
+	    <trim prefix="close_time =case" suffix="end,">
+	        <foreach collection="list" item="item" index="index">
+	        	<if test="item.tradeNumber!=null and item.closeTime !=null">
+	            	when trade_number=#{item.tradeNumber} then #{item.closeTime}
+	            </if>
+	        </foreach>
+	    </trim>
+	</trim>
+	WHERE trade_number IN
+	<foreach collection="list" item="item" index="index" separator="," open="(" close=")">
+	    #{item.tradeNumber}
+	</foreach>
+  </update>
+  
+  <select id="selectOrderByPhoneCallback" resultMap="BaseResultMap" parameterType="com.contactsImprove.entity.api.OrderQueryPara"
+	statementType="CALLABLE">
+	CALL PhoneCallback(#{paymentNumberSuffix},#{paymentName},#{amount},#{startTime},#{endTime},#{priorMinus,mode=IN,jdbcType=TINYINT}) 
+  </select>    
+  <select id="selectByOrderList" resultMap="BaseResultMap" parameterType="com.contactsImprove.entity.api.Orders"
+	statementType="CALLABLE">
+	CALL selectByPage(#{queryStr},#{pageNumber,mode=IN,jdbcType=INTEGER},#{pageSize,mode=IN,jdbcType=INTEGER},#{pageTotal,mode=OUT,jdbcType=INTEGER})
+  </select>
+  <select id="financeStatistics" resultType="java.util.Map" parameterType="java.lang.String">
+	${value}
+  </select>
+  <select id="updateOrderTimeoutById" parameterType="java.lang.String" statementType="CALLABLE" resultType="java.lang.Integer">
+	CALL timeoutOrder(#{orderIds,mode=IN,jdbcType=VARCHAR})
+  </select>
+  
+  <select id="refineTimeoutOrder" statementType="CALLABLE" resultMap="BaseResultMap" >
+	CALL refineTimeoutOrder(#{timeOut,mode=IN,jdbcType=INTEGER})
+  </select>
+	
+  <select id="selectPageByUserId" parameterType="com.contactsImprove.entity.api.OrderQueryPara" resultMap="BaseResultMap"  statementType="CALLABLE">
+  	CALL selectByPage(#{queryStr,mode=IN,jdbcType=VARCHAR}, #{pageNumber,mode=IN,jdbcType=INTEGER},#{pageSize,mode=IN,jdbcType=INTEGER},#{pageTotal,mode=OUT,jdbcType=INTEGER})
+  </select>
+  
+  <select id="selectOrdercount" parameterType="com.contactsImprove.entity.api.Orders" resultType="java.util.Map">
+ 	select 
+		sum(case month(create_time) when '1' then 1 else 0 end) as '1',
+		sum(case month(create_time) when '2' then 1 else 0 end) as '2',
+		sum(case month(create_time) when '3' then 1 else 0 end) as '3',
+		sum(case month(create_time) when '4' then 1 else 0 end) as '4',
+		sum(case month(create_time) when '5' then 1 else 0 end) as '5',
+		sum(case month(create_time) when '6' then 1 else 0 end) as '6',
+		sum(case month(create_time) when '7' then 1 else 0 end) as '7',
+		sum(case month(create_time) when '8' then 1 else 0 end) as '8',
+		sum(case month(create_time) when '9' then 1 else 0 end) as '9',
+		sum(case month(create_time) when '10' then 1 else 0 end) as '10',
+		sum(case month(create_time) when '11' then 1 else 0 end) as '11',
+		sum(case month(create_time) when '12' then 1 else 0 end) as '12'
+	from
+		orders
+  </select>
+ 
+  <select id="selectOrderCountByYear" parameterType="com.contactsImprove.entity.api.Orders" resultType="java.util.Map">
+ 	select 
+		sum(case month(create_time) when '1' then 1 else 0 end) as '1',
+		sum(case month(create_time) when '2' then 1 else 0 end) as '2',
+		sum(case month(create_time) when '3' then 1 else 0 end) as '3',
+		sum(case month(create_time) when '4' then 1 else 0 end) as '4',
+		sum(case month(create_time) when '5' then 1 else 0 end) as '5',
+		sum(case month(create_time) when '6' then 1 else 0 end) as '6',
+		sum(case month(create_time) when '7' then 1 else 0 end) as '7',
+		sum(case month(create_time) when '8' then 1 else 0 end) as '8',
+		sum(case month(create_time) when '9' then 1 else 0 end) as '9',
+		sum(case month(create_time) when '10' then 1 else 0 end) as '10',
+		sum(case month(create_time) when '11' then 1 else 0 end) as '11',
+		sum(case month(create_time) when '12' then 1 else 0 end) as '12',
+		status
+	from
+		orders
+	where
+		year(create_time) = '2018' AND status in('2', '3', '4') group by status
+  </select>
+  
+  <select id="selectJournalAccountEcharts" parameterType="com.contactsImprove.entity.api.Orders" resultType="java.util.Map">
+		select 
+			sum(case when month(create_time) = '1' then currency_amount else 0 end) as '1',
+			sum(case when month(create_time) = '2' then currency_amount else 0 end) as '2',
+			sum(case when month(create_time) = '3' then currency_amount else 0 end) as '3',
+			sum(case when month(create_time) = '4' then currency_amount else 0 end) as '4',
+			sum(case when month(create_time) = '5' then currency_amount else 0 end) as '5',
+			sum(case when month(create_time) = '6' then currency_amount else 0 end) as '6',
+			sum(case when month(create_time) = '7' then currency_amount else 0 end) as '7',
+			sum(case when month(create_time) = '8' then currency_amount else 0 end) as '8',
+			sum(case when month(create_time) = '9' then currency_amount else 0 end) as '9',
+			sum(case when month(create_time) = '10' then currency_amount else 0 end) as '10',
+			sum(case when month(create_time) = '11' then currency_amount else 0 end) as '11',
+			sum(case when month(create_time) = '12' then currency_amount else 0 end) as '12',
+			type
+		from orders 
+		where type in('3', '1') group by type
+	</select>
+	
+	<select id="selectOrderTotal" parameterType="com.contactsImprove.entity.api.Orders" resultType="java.util.Map">
+		select 
+			sum(case when month(create_time) = '1' then amount else 0 end) as '1',
+			sum(case when month(create_time) = '2' then amount else 0 end) as '2',
+			sum(case when month(create_time) = '3' then amount else 0 end) as '3',
+			sum(case when month(create_time) = '4' then amount else 0 end) as '4',
+			sum(case when month(create_time) = '5' then amount else 0 end) as '5',
+			sum(case when month(create_time) = '6' then amount else 0 end) as '6',
+			sum(case when month(create_time) = '7' then amount else 0 end) as '7',
+			sum(case when month(create_time) = '8' then amount else 0 end) as '8',
+			sum(case when month(create_time) = '9' then amount else 0 end) as '9',
+			sum(case when month(create_time) = '10' then amount else 0 end) as '10',
+			sum(case when month(create_time) = '11' then amount else 0 end) as '11',
+			sum(case when month(create_time) = '12' then amount else 0 end) as '12',
+			type
+		from orders
+		<where>
+			<if test="userId != null and userId != '' ">
+				user_id = #{userId,jdbcType=BIGINT} or merchant_user_id = #{userId,jdbcType=BIGINT}
+				and type in('0','2') GROUP BY type
+			</if>
+			and status  = 2
+		</where>
+	</select>
+ 
+</mapper>

@@ -1,0 +1,125 @@
+package com.contactsImprove.entity.api;
+
+
+import com.contactsImprove.notefield.ColumnMapping;
+import com.contactsImprove.utils.PageUtil;
+
+public class OrderQueryPara extends PageUtil {
+	@ColumnMapping(columnName="status")
+	Byte status;
+	@ColumnMapping(columnName="type")
+	Byte type;	
+	/**
+	 * 0:创建时间 ，1：支付时间，2：完成时间
+	 */
+	Byte timeType=0;
+	
+	/**
+	 * 范围查询
+	 */
+	String startTime;
+	
+	String endTime;
+	
+	Long userId;
+	
+	String paymentType;
+	@ColumnMapping(columnName="merchant_account")
+	String merchantAccount;
+	@ColumnMapping(columnName="trade_number")
+	String tradeNumber;
+	
+	Byte userType;
+	@ColumnMapping(columnName="out_trade_no")
+	String outTradeNo;
+
+	public Byte getTimeType() {
+		return timeType;
+	}
+
+	public void setTimeType(Byte timeType) {
+		this.timeType = timeType;
+	}
+
+	public Byte getUserType() {
+		return userType;
+	}
+
+	public void setUserType(Byte userType) {
+		this.userType = userType;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+
+	public Byte getStatus() {
+		return status;
+	}
+
+	public void setStatus(Byte status) {
+		this.status = status;
+	}
+
+	public Byte getType() {
+		return type;
+	}
+
+	public void setType(Byte type) {
+		this.type = type;
+	}
+
+	public String getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+
+	public String getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
+	}
+
+	public String getPaymentType() {
+		return paymentType;
+	}
+
+	public void setPaymentType(String paymentType) {
+		this.paymentType = paymentType;
+	}
+
+	public String getMerchantAccount() {
+		return merchantAccount;
+	}
+
+	public void setMerchantAccount(String merchantAccount) {
+		this.merchantAccount = merchantAccount;
+	}
+
+	public String getTradeNumber() {
+		return tradeNumber;
+	}
+
+	public void setTradeNumber(String tradeNumber) {
+		this.tradeNumber = tradeNumber;
+	}
+
+	public String getOutTradeNo() {
+		return outTradeNo;
+	}
+
+	public void setOutTradeNo(String outTradeNo) {
+		this.outTradeNo = outTradeNo;
+	}
+	
+	
+}

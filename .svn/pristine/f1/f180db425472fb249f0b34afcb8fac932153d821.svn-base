@@ -1,0 +1,142 @@
+package com.contactsImprove.controller.api;
+
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.util.Date;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
+
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.HttpUtil;
+import com.contactsImprove.utils.Md5Util;
+import com.contactsImprove.utils.OrderUtil;
+import com.contactsImprove.utils.RSAUtils;
+import com.contactsImprove.utils.SMSUtil;
+import com.contactsImprove.utils.UserIdEngender;
+
+public class Test {
+	static String privateKey="MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCvBTnvPop6FUDVpJSfQEaALkdIaS4AKPAGCQxcaI35+lQ/DC4Sh6qAwnRBuHO2JVZHu6IH7GTdlB16zZm1VvbylcgzZwLGoWCn9JaaSIICvr35szfvoKbpL/6HxbEEl3TVf505HWCOVkJEda5PGUvq5CzGyx3qbH8A7jbSrBqLngYE1CA6/SdkMzyBOdLccQ59Wc662faT4C4KuFZOTwmKM4UMs7nckoOjXyYJk8t1cf2c9IA4grOd7PFSI2m5EDpfoml2fnvXKGrO52HA6+LX86muH7yIwO1jlBZRKA0o6tW9sdQf2gIXsyRTDZmOUkJrvO/ugOaJYahpr2gQAkgrAgMBAAECggEAIT2N3klzhXJJ6QmkDIbpnOitMyx+xxr/UzYeueJFrMeFfp/ylCReFqxX5i+BEoQO2frh8D1OfuLlonAwFEfbCQG3j0OuPElkESIcBFtnDdxqOmV2ZzWM3db2sZSzZRra3r2o/7L7pqztUxFCtNUqHQePFYZ4PRC0Ilob4XE8bW2ZtCybHrC8yIyFs18Aqhdd/WuM8/rUnLl4lhmmWNREjcdX+dioYg26YfHxYFNRl0GkFddqz998PFkUVWyx1gJjdY7gls7Vkaz9M/fonbd76mhF039RZRmDIKbt1vrd4KWjKeIdxyD0CO1J7E3H2V5imXuXQtrdAG8/Mg6M+Rds0QKBgQDyZjJfkMAhMwGK3phJdLUS6BKFXLcRmItsHG4jI+iheiGzdIzotCDiiB0lVoHIFYtr6dhlFlGM7emrqAomRz8Jm1yBO5N6qoNesqqz9iHVvQhx6ltPzifvj4Rd0PhdVZW1fNmN5AR+vR9Sx2s1cR24LpflYctKpheL8LZyTt1eGQKBgQC41zSzAJUakYEJeuF1eUHFT4Yh3iaqqY3dxF54TX7fo7lC6m2QQPpu8yUj7PPnjlDqRc4p1Uj8fLDtdj+InkIdiZaBypd+dZXJ95A7PZKhUI3hCZxM4dzBexYl642Zf+F7AXNwuHTNgEU7/TZo/EW22hGMe+yMAPvB/b0w6cGY4wKBgFU/K6gAOBF05q336oaqzKOBikHsgVVm2GGE/hbNohpn4UJDUurjrkz8oYNoEOxU51tkOf4TA0sUwIDl7+vWUo0GXln0ocEaBmlfXDk97lhEypuFV+eREOpnBp4Xx8DLQIM7DSehcRNBX6q1BzccON91Q2YgJmZyUwWb+g3pPmDBAoGAdD7j5a94Fj1r6YpeQIMB2hUpRiNwLeR0VAQrZX1XTU6qNGs6fH5hAWXo9a8PtZDLUoqUHbsFK8U/gBfd3Q2qhukAvp+qpt1MVrha/Oa8ULdYgy6IHdHuA8BlLXP2mZLTO4iuETXwP01sPU4B6gS900FRyAgnu+TicB4j3Z8lIgECgYEA1V1nbtJKbcnO48qP0ZMdjMdznvtdY9FxlZ7n8eoWkeBJv5GMw95RklLudoeYOHGb1Mjd6GIVzLkhghip8JHBcu6jyVgqR/XPVd8hHBTtPnX4IUJ7dB6Zz6lWD/xt0IBLuTwqciKqXcSpw4yneuzR8S4GOZb8k8hDqdTwuswjn/0=";
+	static String publicKey="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArwU57z6KehVA1aSUn0BGgC5HSGkuACjwBgkMXGiN+fpUPwwuEoeqgMJ0QbhztiVWR7uiB+xk3ZQdes2ZtVb28pXIM2cCxqFgp/SWmkiCAr69+bM376Cm6S/+h8WxBJd01X+dOR1gjlZCRHWuTxlL6uQsxssd6mx/AO420qwai54GBNQgOv0nZDM8gTnS3HEOfVnOutn2k+AuCrhWTk8JijOFDLO53JKDo18mCZPLdXH9nPSAOIKznezxUiNpuRA6X6Jpdn571yhqzudhwOvi1/Oprh+8iMDtY5QWUSgNKOrVvbHUH9oCF7MkUw2ZjlJCa7zv7oDmiWGoaa9oEAJIKwIDAQAB";
+
+	
+	/**	 * 	客户付款给币商，标记订单已付款。
+	 * tradeNumber:交易流水号
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * timestamp：时间戳
+	 * version:版本号
+	 * paymentId:支付方式id
+	 * @param Orders
+	 * @return
+	 */
+	public static void main(String[] args) throws Exception{
+		
+        Map<String, String> keyMap = RSAUtils.createKeys(2048);
+        String  publicKey = keyMap.get("publicKey");
+        String  privateKey = keyMap.get("privateKey");
+        System.out.println(publicKey.length()+"公钥: \n\r" + publicKey);
+        System.out.println(privateKey.length()+"私钥： \n\r" + privateKey);
+		
+//		String url="https://www.saintenjoy.online/dist/dist/g.css";
+//		java.util.regex.Pattern p=java.util.regex.Pattern.compile("/dist/([^\\.(gif|jpg|jpeg|png|bmp|swf|js|css)]?.*\\.(gif|jpg|jpeg|png|bmp|swf|js|css))$");
+//		java.util.regex.Matcher m=p.matcher(url);
+//		if(m.find()) {
+//			System.out.println(m.group(0));
+//		}
+		
+//		transferUsdt();
+
+//		createOrder();
+//		orderPay();
+	
+//		System.out.println(new BigDecimal("20").divide(new BigDecimal("7"),6, BigDecimal.ROUND_HALF_UP));
+				
+	}
+	
+	public static void orderPay() throws Exception{
+		
+		String url="http://localhost:8080/ContactsImprove/api/orderPay";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		
+		paramap.put("tradeNumber", "2018120514102161610000000001");
+		paramap.put("outTradeNo", "135699");
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("version", "1.0");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+//		System.out.println(line);
+		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+		String result=HttpUtil.post(url, orderStr.toString());		
+		System.out.println(result);		
+	}
+	
+	/**
+	 * 创建订单，返回币商银行账号，二维付款码。
+	 * outTradeNo,商户订单号
+	 * merchantUserId,商户账号
+	 * currencyType,电子币类型
+	 * amount ,充值金额
+	 * version ,版本号
+	 * subject,主题
+	 * notifyUrl,回调url
+	 * timestamp,时间戳
+	 * paymentType,支付方式。
+	 * 可选参数有：
+	 * merchantAccount: 商户平台用户的唯一标示。 
+	 * body,交易描述	 *
+	 * @param Orders
+	 * @return
+	 */	
+	public static void createOrder() throws Exception{
+		
+		String url="http://localhost:8080/ContactsImprove/api/createOrder";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		paramap.put("outTradeNo", SMSUtil.getSMSCode());
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("currencyType", "USDT");
+		paramap.put("amount", "200");
+		paramap.put("version", "1.0");
+		paramap.put("subject", "购买USDT");
+		paramap.put("notifyUrl", "http://localhost:8080/ContactsImprove/api/notify");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+		paramap.put("paymentType", Payment.alipay.code);
+		paramap.put("merchantAccount", "flootball");	
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+//		System.out.println(line);
+		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+		String result=HttpUtil.post(url, orderStr.toString());		
+		System.out.println(result);		
+	}
+	
+	public static void transferUsdt() throws Exception{		
+		String url="http://localhost:8080/ContactsImprove/api/transferUsdt";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		paramap.put("outTradeNo", SMSUtil.getSMSCode());
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("currencyType", "USDT");
+		paramap.put("currencyAmount", "200");
+		paramap.put("version", "1.0");
+		paramap.put("subject", "提币USDT");
+		paramap.put("notifyUrl", "http://localhost:8080/ContactsImprove/api/notify");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+		paramap.put("merchantAccount", "flootball");	
+		paramap.put("toAddress", "oxfdkfakdfjaljderuoejfdkjfpe");
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+//		System.out.println(line);
+		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+		String result=HttpUtil.post(url, orderStr.toString());		
+		System.out.println(result);		
+	}
+}

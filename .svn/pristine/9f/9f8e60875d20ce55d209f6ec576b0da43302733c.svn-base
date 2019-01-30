@@ -1,0 +1,155 @@
+package com.contactsImprove.controller.api;
+
+import java.math.BigDecimal;
+import java.util.Base64;
+import java.util.Date;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.beanutils.BeanUtils;
+
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.entity.api.NotifyPara;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.HttpUtil;
+import com.contactsImprove.utils.Md5Util;
+import com.contactsImprove.utils.OrderUtil;
+import com.contactsImprove.utils.RSAUtils;
+import com.contactsImprove.utils.SMSUtil;
+
+import net.sf.json.JSONObject;
+
+public class Test {
+	static String privateKey="MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCkbEg+bS1o6hl5wzDte6D3qLiINUQYcHPsvkC0MzQCeYVGJ9vEq27Z6hi2fyOnYfQmWzef7mMtNr8cyLY6vrjjFfKAzIytVTtkvX+2Rz0feChkblQG2QFwP67I+PWBnPABn8vlNf6hHvPgHcI/BK6Tg6V5JCfm7gtptWwjQUSDXjYRaABq3+/+kTXLO6NzbjOsI4KhQFauzffV768CBkztFasoat9+TAzlLn94O+5Aolx2l+tWZ/FDP4U8m8aXybDNDKoqjXDmls4nh+DETnsGUebV2P1gUK5AHskWPhZrux1oTW/r2/x2ZDDp/jf648OytWCKWyUZTUw8lIdyYit1AgMBAAECggEAR1go3NWYz55MoZX9o/5x8SSHtaqPOp+I3aAMCWTyW2SJXNCsvqC4f9vhD0cJnHaXbxFDiKTy6cqIkJ/S2pipNvft+s9G92s1U1gak2hD8GS9+h4ZXcNJqYAoglHsjWoghkPlQDb2nskEfynKgHeynJWR9oemvMBruVmca4vFg85mphObuxmp8mZx9XlY197PkVl44WEP4FrISG7U390WrgP5B3oFxrFP/yFE1mTCy1vaQl3EJJvzvhfyC+7PqLCoM/QJLskfird+2VuzPoODeZf7IHZ+ExrnyfS6ykBBhSXn6QTPLHpEriF95bNPsNpebkDxz99xoyjWAEHFMuAO/QKBgQD7QtMgd1uW/xpIb84CXawiu9QHZZkZU3clRJ0IQGS6A8hCDCqYgWsVxdlQE7nZCQ+OWtl59xvB/YGhAXoEibT5VMctvdQ7jdCRq/C/YwKtbXe81kWv7JcEOEyyTTgdwNQYpzXvPRAw4PlH4u0S5+YV8P4x5j0IE8ynKQv2k9Q21wKBgQCnhixb88rhdH3dYPGlW/GMte4JrbtNunO9yc13v7IrWOhgci/mVQLTc3my8CW1QDpXp0VtuRF31wrnybr/82CJFYyoTcVHEJoliX55/QMVCe+JxTm+BWkaYZZljAp7zSAjU7KcjS+xZrY7k9W+Zpz/+Diwgr5cFilf4iO8Q48CkwKBgEDckU/yP+yM0iYc5ptpvwQAZM28BnepOjqeqcL1jIsQauPR7DUOQ6yNNHodfX5vflqLTVTU24+Kd6oujWcafWNX5UsDlAQDqfHQ5wcg8hH/DkfrMHYnpxxpxDLLCE919cqfb6bgpotXqEJMbFLTFmxXl+cdvmeVZOFKEVKH+uJlAoGBAJy3czYOSmRBcyGveD/mVID7DRU21nsviukoKTP2O/o7MSBQkijarEsdwuK3r77wt+OaEuRDdmjy3jvaRzr79fooE667GmuRx3KIPq5mGAUNh24N+CegriNE2cpjiMcqLP9/ZB76IXzHBoGTmiiFnCgFkRrnJKfG/6u4RQ/w749LAoGBAMIJtK0/XPlUbbnnQfK0Ez7mbePhxDT8oQxyz8Ld+iZo3V2ST1zwUyqIwkRcqfZkK/pc5qgAmEAGids4z6wAQN3ypegUklJxd1/AQZjZCbC3f53XEa82l0k63oRAr0Ztm50biST9k7mPHly+qSthvcTwabp6ya6D8Mpo1qe6R4hx";
+	static String publicKey="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApGxIPm0taOoZecMw7Xug96i4iDVEGHBz7L5AtDM0AnmFRifbxKtu2eoYtn8jp2H0Jls3n+5jLTa/HMi2Or644xXygMyMrVU7ZL1/tkc9H3goZG5UBtkBcD+uyPj1gZzwAZ/L5TX+oR7z4B3CPwSuk4OleSQn5u4LabVsI0FEg142EWgAat/v/pE1yzujc24zrCOCoUBWrs331e+vAgZM7RWrKGrffkwM5S5/eDvuQKJcdpfrVmfxQz+FPJvGl8mwzQyqKo1w5pbOJ4fgxE57BlHm1dj9YFCuQB7JFj4Wa7sdaE1v69v8dmQw6f43+uPDsrVgilslGU1MPJSHcmIrdQIDAQAB";
+
+	
+	/**	 * 	客户付款给币商，标记订单已付款。
+	 * tradeNumber:交易流水号
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * timestamp：时间戳
+	 * version:版本号
+	 * paymentId:支付方式id
+	 * @param Orders
+	 * @return
+	 */
+	public static void main(String[] args) throws Exception{		
+		System.out.println(Md5Util.execute("1826026401002123456"));		
+		String orderStr="amount=10&body=BOOKS&currencyType=USDT&merchantUserId=1800237571001&notifyUrl=http://127.0.0.1&outTradeNo=test01&paymentType=ALIPAY&subject=BOOKS&timestamp=2018-12-29 16:42:04&version=1.0";		
+		String sign="eBG1wOPdVPMFfHx6ICDkrVlRsKtbcgSZb+zEONz8MNbIBSS5StBhz2KlyZwNp5hbN162Sm5CCfXsENOVtbvPfcYZKGm/PFWKVXykOoaNMx66i8hamifb33VAofnLdU9KoCmolWb3uSAvoHmyPB0LdY6qTiIyCiORb+xSNLjmiowaRdj6dV/gMy0ZKETbi2hBXzF0DfO6JhMHWGi1nvMx8v6iPt0sAzLY9agl+Ra+Lfqh89iQg595FuxkhM8bph5EMNLpQe2ZRDzACVhNza4RRP7Rtpp8YXVATfXXSKkoakt7Gua8AEERHsPVUJZxZMMdDIT5/ZeXbbdw1KweLBzjXw==";	
+		String sign1=RSAUtils.signature(orderStr, privateKey);
+//		System.out.println(java.net.URLDecoder.decode(sign, "UTF-8"));
+//		System.out.println(sign);
+	//	sign1=java.net.URLEncoder.encode(sign1, "UTF-8");		
+		JSONObject json=new JSONObject();
+		json.put("payImage", "http://支付二维码图片路径");
+		json.put("bankName", "开户行");
+		json.put("branchNumber", "支行代号");
+		json.put("ownerName", "持有者名字");
+		System.out.println(json.toString());
+		sign1=java.net.URLEncoder.encode(json.toString(),"UTF-8");
+		System.out.println(sign1);
+//		System.out.println(RSAUtils.verifySignature(orderStr,sign,publicKey));				
+//		String url="https://www.saintenjoy.online/dist/dist/g.css";
+//		java.util.regex.Pattern p=java.util.regex.Pattern.compile("/dist/([^\\.(gif|jpg|jpeg|png|bmp|swf|js|css)]?.*\\.(gif|jpg|jpeg|png|bmp|swf|js|css))$");
+//		java.util.regex.Matcher m=p.matcher(url);
+//		if(m.find()) {
+//			System.out.println(m.group(0));
+//		}		
+//		transferUsdt();
+//		createOrder();
+//		orderPay();
+//		System.out.println(new BigDecimal("20").divide(new BigDecimal("7"),6, BigDecimal.ROUND_HALF_UP));				
+	}
+	
+	public static void orderPay() throws Exception{
+		
+		String url="http://localhost:8080/ContactsImprove/api/orderPay";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		
+		paramap.put("tradeNumber", "2018120514102161610000000001");
+		paramap.put("outTradeNo", "135699");
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("version", "1.0");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		System.out.println(sign);
+		System.out.println(Base64.getEncoder().encodeToString(sign.getBytes()));
+		
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+//		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+////		System.out.println(line);
+//		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+//		String result=HttpUtil.post(url, orderStr.toString());		
+//		System.out.println(result);		
+	}
+	
+	/**
+	 * 创建订单，返回币商银行账号，二维付款码。
+	 * outTradeNo,商户订单号
+	 * merchantUserId,商户账号
+	 * currencyType,电子币类型
+	 * amount ,充值金额
+	 * version ,版本号
+	 * subject,主题
+	 * notifyUrl,回调url
+	 * timestamp,时间戳
+	 * paymentType,支付方式。
+	 * 可选参数有：
+	 * merchantAccount: 商户平台用户的唯一标示。 
+	 * body,交易描述	 *
+	 * @param Orders
+	 * @return
+	 */	
+	public static void createOrder() throws Exception{
+		
+		String url="http://localhost:8080/ContactsImprove/api/createOrder";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		paramap.put("outTradeNo", SMSUtil.getSMSCode());
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("currencyType", "USDT");
+		paramap.put("amount", "200");
+		paramap.put("version", "1.0");
+		paramap.put("subject", "购买USDT");
+		paramap.put("notifyUrl", "http://localhost:8080/ContactsImprove/api/notify");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+		paramap.put("paymentType", Payment.alipay.code);
+		paramap.put("merchantAccount", "flootball");	
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+//		System.out.println(line);
+		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+		String result=HttpUtil.post(url, orderStr.toString());		
+		System.out.println(result);		
+	}
+	
+	public static void transferUsdt() throws Exception{		
+		String url="http://localhost:8080/ContactsImprove/api/transferUsdt";	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		paramap.put("outTradeNo", SMSUtil.getSMSCode());
+		paramap.put("merchantUserId", "2018112710100000002");
+		paramap.put("currencyType", "USDT");
+		paramap.put("currencyAmount", "200");
+		paramap.put("version", "1.0");
+		paramap.put("subject", "提币USDT");
+		paramap.put("notifyUrl", "http://localhost:8080/ContactsImprove/api/notify");
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));
+		paramap.put("merchantAccount", "flootball");	
+		paramap.put("toAddress", "oxfdkfakdfjaljderuoejfdkjfpe");
+		String line=OrderUtil.createParaOrderStr(paramap);		
+		String sign=RSAUtils.signature(line, privateKey);
+		//sign 签名传输的时候要进行 URLEncoder.encode,或是 设置http请求头 : Content-Type: application/x-www-form-urlencoded
+		String orderStr=line+"&sign="+java.net.URLEncoder.encode(sign, RSAUtils.CHARSET);
+//		System.out.println(line);
+		System.out.println(RSAUtils.verifySignature(line,sign,publicKey));
+		String result=HttpUtil.post(url, orderStr.toString());		
+		System.out.println(result);		
+	}
+}

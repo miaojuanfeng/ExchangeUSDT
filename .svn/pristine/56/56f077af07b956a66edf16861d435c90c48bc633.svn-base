@@ -1,0 +1,44 @@
+package com.contactsImprove.dao.api;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.utils.PageUtil;
+
+public interface OrdersDao {
+	
+    int deleteByPrimaryKey(String tradeNumber);
+
+    int insertSelective(Orders record);
+
+    Orders selectByPrimaryKey(String tradeNumber);
+
+    int updateByPrimaryKeySelective(Orders record);
+    
+    Integer updateOrderTimeoutById(String orderIds);  
+    
+    List<Orders> refineTimeoutOrder(Integer timeOut);
+    
+    List<Orders> selectByOrderList(Orders record);
+    
+    List<Orders> selectOrderByMerchantUserId(@Param("merchantUserId")Long merchantUserId,@Param("outTradeNo")String outTradeNo);
+    
+    List<Orders> selectPageByUserId(PageUtil pageUtil); 
+    
+    int updateBatchNotifyStatus(List<Orders> orderList);
+    
+    List<Object> selectOrderCountByYear(Date date);
+    
+    List<Object> selectOrdercount();
+    
+    List<Object> selectJournalAccountEcharts(Date date);
+    
+    List<Object> selectOrderTotal(Orders orders);
+    
+    List<Orders>  selectListByOrderId(@Param("orderIds")String orderIds);
+    
+    List<HashMap<String, Object>> selectSumOrderByPara(String para);
+    
+}

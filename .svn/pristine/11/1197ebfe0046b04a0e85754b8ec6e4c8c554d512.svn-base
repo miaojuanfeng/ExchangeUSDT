@@ -1,0 +1,91 @@
+package com.contactsImprove.ferriswheel;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
+
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.json.JsonReturnHandler;
+import com.contactsImprove.service.admin.WalletService;
+import com.contactsImprove.service.api.CurrencyService;
+import com.contactsImprove.service.api.JournalAccountService;
+import com.contactsImprove.service.api.MerchantNotifyService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.UserMerchantService;
+import com.contactsImprove.utils.BridgeUSDTRate;
+import com.contactsImprove.utils.CoinScanJob;
+import com.contactsImprove.utils.NotifyCommercial;
+import com.contactsImprove.utils.USDTUtils;
+import com.contactsImprove.waterwheel.Turntable;
+
+public class InstantiationMyService implements ApplicationListener<ContextRefreshedEvent> {
+	
+	@Autowired
+	OrdersService ordersService;
+	@Autowired
+	MerchantNotifyService merchantNotifyService;
+	@Autowired
+	NotifyCommercial notifyCommercial;	
+	@Autowired
+	CurrencyService currencyService;
+	@Autowired
+	USDTUtils uSDTUtils;
+	@Autowired
+	WalletService walletService;
+	@Autowired
+	UserMerchantService userMerchantService;
+	@Autowired
+	OrdersService orderService;
+	@Autowired
+	JournalAccountService journalAccountService;
+	Timer timer;
+
+	@Override
+	public void onApplicationEvent(ContextRefreshedEvent event) {
+		
+		// 开启倒计时管理 。
+//		OrderTimeout.getInstance().setOrderService(ordersService);
+		Wheel.init(ordersService);
+		// 出金超时，币商没付款。
+		/*NotifyOrderTimeout.getInstance().initNotifyOrderTimeout(journalAccountService, orderService, notifyCommercial, ordersService, userMerchantService);*/		
+		//回调管理。
+		Turntable.getInstance().init(merchantNotifyService, notifyCommercial,ordersService);		
+		// 过期订单处理 。
+		new CheckOrderTimeout(ordersService,merchantNotifyService,notifyCommercial).CheckOrder();
+		
+		BridgeUSDTRate.setCurrencyService(currencyService);
+		
+		CoinScanJob.initCoinScanJob(walletService, uSDTUtils);
+		if(!SystemConst.hasLocal) {	
+			new CoinScanJob().start();
+		}
+		/*
+		 * 注册到容器,采用这种注册方式的目的:
+		 * 自定义的HandlerMethodReturnValueHandler放在默认实现的前面,从而优先采用自定义处理策略
+		 * 否则,无法覆盖@ResponseBody处理机制,
+		 * 且String类型的返回值将默认由ViewNameMethodReturnValueHandler处理而映射为视图名
+		 */
+		ApplicationContext applicationContext = event.getApplicationContext();
+		RequestMappingHandlerAdapter handlerAdapter = (RequestMappingHandlerAdapter) applicationContext
+				.getBean(RequestMappingHandlerAdapter.class);
+		List<HandlerMethodReturnValueHandler> handlers = new ArrayList<HandlerMethodReturnValueHandler>();
+		JsonReturnHandler returnHandel = applicationContext.getBean(JsonReturnHandler.class);
+
+		handlers.add(returnHandel);
+		handlers.addAll(handlerAdapter.getReturnValueHandlers());
+		handlerAdapter.setReturnValueHandlers(handlers);
+		
+		if(timer!=null) {
+			timer.cancel();
+		}
+		timer=new Timer();
+		timer.schedule(new ExchangeRateTask(), 500, 2*60 * 60 * 1000);		
+	}
+}

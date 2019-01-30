@@ -1,0 +1,20 @@
+package com.contactsImprove.dao.api;
+
+import java.util.List;
+import com.contactsImprove.entity.api.Users;
+
+public interface UsersDao {
+    int deleteByPrimaryKey(Long userId);
+
+    int insert(Users record);
+
+    int insertSelective(Users record);
+
+    Users selectByPrimaryKey(Long userId);
+
+    int updateByPrimaryKeySelective(Users record);
+    
+    List<Users> selectUsersByList(Users record);
+
+    Users selectByPhoneNumber(String phoneNumber);
+}

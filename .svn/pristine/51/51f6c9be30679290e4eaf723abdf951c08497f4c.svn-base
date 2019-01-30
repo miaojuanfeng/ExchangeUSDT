@@ -1,0 +1,391 @@
+package com.contactsImprove.controller.api;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import com.contactsImprove.constant.MerchantOrderConst.Payment;
+import com.contactsImprove.constant.ResponseCode.StatusCode;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.constant.UsersConst.UsersType;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.entity.api.UserMerchant;
+import com.contactsImprove.entity.api.Users;
+import com.contactsImprove.json.JSON;
+import com.contactsImprove.service.api.ComplainOrderService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.service.api.UserMerchantService;
+import com.contactsImprove.service.api.UserWalletService;
+import com.contactsImprove.service.api.UsersService;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.NotifyCommercial;
+import com.contactsImprove.utils.OrderUtil;
+import com.contactsImprove.utils.RSAUtils;
+import com.contactsImprove.utils.SessionUtil;
+import com.contactsImprove.utils.StringUtil;
+
+@Controller
+@RequestMapping("/api")
+public class TestPay {
+	
+	@Autowired
+	UserWalletService userWalletService;
+	@Autowired
+	UserMerchantService userMerchantService;	
+	@Autowired
+	OrdersService ordersService;
+	@Autowired
+	ComplainOrderService complainOrderService;
+	@Autowired
+	NotifyCommercial notifyCommercial;
+	@Autowired
+	UsersService usersService;
+	
+	/**	  商户余额查询。
+	 * merchantUserId:商户号
+	 * timestamp：时间戳
+	 * version:版本号
+	 * @param Orders
+	 * @return
+	 */	
+	@RequestMapping(value = "/testUserBalance",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> testUserBalance(Orders order)throws Exception{
+		Map<String, Object> map = new HashMap<>();		
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getTimestamp())	
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}		
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt==null || umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("version", order.getVersion());
+		paramap.put("timestamp", order.getTimestamp());
+	    String line=OrderUtil.createParaOrderStr(paramap);
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());
+		paramap.put("sign", sign);
+		line=OrderUtil.createParaOrderStrByEncode(paramap);
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+	    return map;
+	}
+	
+	
+	/**	  订单状态查询。
+	 * tradeNumber:交易流水号
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * timestamp：时间戳
+	 * version:版本号
+	 * @param Orders
+	 * @return
+	 */	
+	@RequestMapping(value = "/testQueryOrder",method=RequestMethod.POST)
+	@JSON(type = Orders.class, filter = "notifyUrl,notifyStatus,timestamp,payTimeout,sign,queryStr,pageSize,pageTotal,pageNumber,paymentType")
+	public Map<String, Object> testQueryOrder(Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();		
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo())
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getTimestamp())	
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}		
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt==null || umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("version", order.getVersion());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("tradeNumber", order.getTradeNumber());	
+	    String line=OrderUtil.createParaOrderStr(paramap);
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());		
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		data.put("sign", java.net.URLEncoder.encode(sign,RSAUtils.CHARSET));
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+
+
+	    return map;
+	}	
+	
+	/**
+	 * 商户客户出金
+	 * merchantUserId:商户订单号
+	 * outTradeNo:商户号
+	 * amount:金额
+	 * version:币种类型
+	 * subject:时间戳
+	 * paymentType:收款方式
+	 * paymentNumber:收款卡号,或是淘宝，微信号。
+	 * ext:收款二维码路径
+	 * subject:主题
+	 * version:版本号
+	 * 可选
+	 * merchantAccount：商户的客户号
+	 * notifyUrl:回调地址
+	 * body:交易描述
+	 * @return
+	 */
+	@RequestMapping(value = "/testWithdrawal",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> withdrawal (Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();	
+		byte paymentType=Payment.getTypeByCode(order.getPaymentType());
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		if(StringUtil.isBlank(order.getMerchantUserId()) || StringUtil.isBlank(order.getOutTradeNo())
+		|| (StringUtil.isBlank(order.getAmount()) && order.getAmount().compareTo(BigDecimal.ZERO)<=0) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getSubject()) || StringUtil.isBlank(order.getTimestamp())
+		|| paymentType==0 || StringUtil.isBlank(order.getPaymentNumber())
+		){
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("amount", order.getAmount()+"");		
+		paramap.put("version", order.getVersion());
+		paramap.put("subject", order.getSubject());
+		paramap.put("body", order.getBody());
+		paramap.put("currencyType", order.getCurrencyType());
+		paramap.put("paymentType", order.getPaymentType());
+		paramap.put("paymentNumber", order.getPaymentNumber());
+		paramap.put("ext", order.getExt()+"");
+		paramap.put("timestamp", order.getTimestamp());	
+		paramap.put("notifyUrl", order.getNotifyUrl());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+	    String line=OrderUtil.createParaOrderStr(paramap);
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());
+		paramap.put("sign", sign);
+		line=OrderUtil.createParaOrderStrByEncode(paramap);
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+	    return map;
+	}
+	
+	/**
+	 * 商户客户发起申诉
+	 * tradeNumber:交易流水号
+	 * outTradeNo:商户订单号
+	 * merchantUserId:商户号
+	 * timestamp:时间戳
+	 * body:申诉原因
+	 * version:版本号
+	 * sign:签名
+	 * 可选
+	 * merchantAccount：商户的客户号
+	 * @return
+	 */
+	@RequestMapping(value = "/testComplainOrder",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> complainOrder(HttpServletRequest request,Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();	
+		TreeMap<String, String> paramap = new TreeMap<String, String>();	
+		Users user = SessionUtil.getSession(request);
+		order.setMerchantUserId(user.getUserId());
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo()) || StringUtil.isBlank(order.getTradeNumber()) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getTimestamp())
+		){
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		if(umt==null || umt.getStatus()==0) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", "无此商户号");
+			return map;
+		}
+		paramap.put("tradeNumber", order.getTradeNumber());
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());			
+		paramap.put("version", order.getVersion());
+		paramap.put("body", order.getBody());
+		paramap.put("timestamp", order.getTimestamp());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+		String line=OrderUtil.createParaOrderStr(paramap);
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());		
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		data.put("sign", java.net.URLEncoder.encode(sign,RSAUtils.CHARSET));
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+		return map;
+	}
+	
+	
+	@RequestMapping(value = "/testRouter",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> testRouter(HttpServletRequest request,Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();
+		
+		System.out.println(request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath());
+					
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		return map;
+	}
+	
+	@RequestMapping(value = "/testCreateOrder",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> testCreateOrder(HttpServletRequest request,Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();		
+		byte paymentType=Payment.getTypeByCode(order.getPaymentType());
+		Users user = SessionUtil.getSession(request);
+		order.setMerchantUserId(user.getUserId());
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo()) || StringUtil.isBlank(order.getCurrencyType())
+		|| (StringUtil.isBlank(order.getAmount()) && order.getAmount().compareTo(BigDecimal.ZERO)<=0) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getSubject()) || StringUtil.isBlank(order.getTimestamp())	
+		|| StringUtil.isBlank(order.getPaymentType()) || paymentType==0 || user.getType()!=UsersType._1.status
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("currencyType", order.getCurrencyType());
+		paramap.put("amount", order.getAmount()+"");		
+		paramap.put("paymentType", order.getPaymentType());
+		paramap.put("version", order.getVersion());
+		paramap.put("subject", order.getSubject());
+		paramap.put("body", order.getBody());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("notifyUrl", order.getNotifyUrl());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+		String line=OrderUtil.createParaOrderStr(paramap);
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(user.getUserId());
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());		
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		data.put("sign", java.net.URLEncoder.encode(sign,RSAUtils.CHARSET));
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+		return map;
+	}
+
+		
+	@RequestMapping(value = "/testOrderPay",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> testOrderPay(HttpServletRequest request,Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();			
+		TreeMap<String, String> paramap = new TreeMap<String, String>();
+		Users user = SessionUtil.getSession(request);
+		order.setMerchantUserId(user.getUserId());
+		order =ordersService.selectByPrimaryKey(order.getTradeNumber());
+		paramap.put("merchantUserId", user.getUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("tradeNumber", order.getTradeNumber());
+		paramap.put("version", order.getVersion());
+		paramap.put("timestamp", DateTools.DateToStr2(new Date()));	
+		String line=OrderUtil.createParaOrderStr(paramap);
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(user.getUserId());
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());		
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		data.put("sign", java.net.URLEncoder.encode(sign,RSAUtils.CHARSET));
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+		return map;
+	}
+	
+	@RequestMapping(value = "/testTransferUsdt",method=RequestMethod.POST)
+	@Transactional
+	@ResponseBody
+	public Map<String, Object> testTransferUsdt(HttpServletRequest request,Orders order) throws Exception{
+		Map<String, Object> map = new HashMap<>();		
+		Users user = SessionUtil.getSession(request);
+		order.setMerchantUserId(user.getUserId());
+		TreeMap<String, String> paramap = new TreeMap<String, String>();		
+		if(StringUtil.isBlank(order.getMerchantUserId()) 
+		|| StringUtil.isBlank(order.getOutTradeNo())
+		|| StringUtil.isBlank(order.getCurrencyType())
+		|| (StringUtil.isBlank(order.getCurrencyAmount()) && order.getCurrencyAmount().compareTo(BigDecimal.ZERO)<=0) 
+		|| StringUtil.isBlank(order.getVersion()) || !SystemConst.version.equals(order.getVersion())
+		|| StringUtil.isBlank(order.getSubject()) || StringUtil.isBlank(order.getToAddress())
+		|| StringUtil.isBlank(order.getTimestamp())
+		) {
+			map.put("code", StatusCode._303.status);
+			map.put("msg", StatusCode._303.msg);
+			return map;
+		}
+		paramap.put("merchantUserId", order.getMerchantUserId()+"");
+		paramap.put("outTradeNo", order.getOutTradeNo());		
+		paramap.put("currencyType", order.getCurrencyType());
+		paramap.put("currencyAmount", order.getCurrencyAmount()+"");		
+		paramap.put("version", order.getVersion());
+		paramap.put("subject", order.getSubject());
+		paramap.put("body", order.getBody());
+		paramap.put("timestamp", order.getTimestamp());		
+		paramap.put("notifyUrl", order.getNotifyUrl());
+		paramap.put("merchantAccount", order.getMerchantAccount());	
+		paramap.put("toAddress", order.getToAddress());
+		String line=OrderUtil.createParaOrderStr(paramap);
+		UserMerchant umt=userMerchantService.selectByPrimaryKey(order.getMerchantUserId());
+		String sign=RSAUtils.signature(line, umt.getPrivateKey());		
+		Map<String, String> data = new HashMap<>();		
+		data.put("paraStr", line);
+		data.put("sign", java.net.URLEncoder.encode(sign,RSAUtils.CHARSET));
+		map.put("code", StatusCode._200.status);
+		map.put("msg", StatusCode._200.msg);
+		map.put("data", data);
+		
+		return map;
+	}
+	
+}

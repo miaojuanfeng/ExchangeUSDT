@@ -1,0 +1,20 @@
+package com.contactsImprove.dao.api;
+
+import java.util.Collection;
+import java.util.List;
+import com.contactsImprove.entity.api.JournalAccount;
+import com.contactsImprove.utils.PageUtil;
+
+public interface JournalAccountDao {
+    int deleteByPrimaryKey(Long journalAccountId);
+
+    int insertSelective(JournalAccount record);
+
+    JournalAccount selectByPrimaryKey(Long journalAccountId);
+
+    int updateByPrimaryKeySelective(JournalAccount record);
+    
+    List<JournalAccount> selectByUserId(PageUtil pu);
+    
+    int insertBatch(Collection<JournalAccount> list);
+}

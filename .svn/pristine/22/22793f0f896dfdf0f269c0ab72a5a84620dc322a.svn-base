@@ -1,0 +1,98 @@
+package com.contactsImprove.ferriswheel;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.contactsImprove.constant.MerchantOrderConst.OrderType;
+import com.contactsImprove.constant.MerchantOrderConst.OrdersStatus;
+import com.contactsImprove.constant.SystemConst;
+import com.contactsImprove.entity.api.MerchantNotify;
+import com.contactsImprove.entity.api.Orders;
+import com.contactsImprove.service.api.MerchantNotifyService;
+import com.contactsImprove.service.api.OrdersService;
+import com.contactsImprove.utils.DateTools;
+import com.contactsImprove.utils.NotifyCommercial;
+
+
+public class CheckOrderTimeout {
+
+
+	private OrdersService ordersService;
+	private MerchantNotifyService merchantNotifyService;
+	private NotifyCommercial notifyCommercial;
+	
+	private boolean hasStart=false;
+	
+		
+	public CheckOrderTimeout(OrdersService ordersService,MerchantNotifyService merchantNotifyService,NotifyCommercial notifyCommercial) {
+		this.ordersService=ordersService;	
+		this.merchantNotifyService=merchantNotifyService;
+		this.notifyCommercial=notifyCommercial;
+	}
+
+	public void CheckOrder() {
+		if(!hasStart) {
+			hasStart=true;
+			CheckOrderThread cot =new CheckOrderThread();
+			cot.start();
+		}
+	}
+	
+	
+	private class CheckOrderThread extends Thread{	
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub			
+			List<Orders> list=ordersService.refineTimeoutOrder(SystemConst.Order_TimeOut);
+			List<String> withDraw=new ArrayList<String> ();
+			for(Orders od :list ) {
+				if(od.getType()!=null) {
+					if(od.getType()<OrderType._2.type) {						
+						int slotIndex=-1;
+						int secode=0;
+						if(od.getStatus()==OrdersStatus._0.status) {
+							secode=Math.abs((int)(((od.getCreateTime().getTime()+SystemConst.Order_TimeOut*1000)-System.currentTimeMillis())/1000));
+						}else if(od.getStatus()==OrdersStatus._1.status){
+							secode=Math.abs((int)(((od.getPaymentTime().getTime()+SystemConst.Order_TimeOut*1000)-System.currentTimeMillis())/1000));
+						}						
+						slotIndex=secode%Wheel.slot_max;
+						Wheel.pushSlot(od.getTradeNumber(), slotIndex);						
+					}else if(od.getType()==OrderType._2.type) {
+						withDraw.add(od.getTradeNumber());
+					}
+				}
+			}
+			list.clear();
+			list=null;		
+			if(withDraw.size()>0) {
+				NotifyOrderTimeout.getInstance().pustTimeout(withDraw);
+			}
+			//检查一下有没回调过期的。有则先回调。
+			int slotIndex=DateTools.getSecondOfDay();
+			
+			List<MerchantNotify> notifyList=merchantNotifyService.selectByGreaterThanSlotIndex(slotIndex);
+			List<Orders> orderList=null;
+			for(int i=0;i<notifyList.size();i++) {
+				MerchantNotify mn=notifyList.get(i);
+				byte status=notifyCommercial.notifyOrderFinish(mn,mn.getPrivateKey());
+				if(status>0) {
+					if(orderList==null) {
+						orderList=new ArrayList<Orders>();
+					}
+					Orders order=new Orders();
+					order.setTradeNumber(mn.getTradeNumber());
+					order.setNotifyStatus(status);
+					orderList.add(order);
+				}
+			}
+			if(orderList!=null && orderList.size()>0) {
+				ordersService.updateBatchNotifyStatus(orderList);
+			}
+			notifyList=null;
+			
+			
+		}
+	}
+
+}

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contactsImprove.dao.api.UsersDao">
+	<resultMap id="BaseResultMap" type="com.contactsImprove.entity.api.Users">
+		<id column="user_id" property="userId" jdbcType="BIGINT" />
+		<result column="user_name" property="userName" jdbcType="VARCHAR" />
+		<result column="phone_number" property="phoneNumber" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+		<result column="type" property="type" jdbcType="TINYINT" />
+		<result column="status" property="status" jdbcType="TINYINT" />
+		<association property="userMerchant" javaType="com.contactsImprove.entity.api.UserMerchant" resultMap="MerchantResultMap"></association>
+		<association property="userWallet" javaType="com.contactsImprove.entity.api.UserWallet" resultMap="WalletResultMap"></association>
+	</resultMap>
+
+	<resultMap id="MerchantResultMap" type="com.contactsImprove.entity.api.UserMerchant">
+		<id column="user_id" property="userId" jdbcType="BIGINT" />
+		<result column="private_key" property="privateKey" jdbcType="VARCHAR" />
+		<result column="public_key" property="publicKey" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+	<resultMap id="WalletResultMap" type="com.contactsImprove.entity.api.UserWallet">
+		<id column="wallet_id" property="walletId" jdbcType="BIGINT" />
+		<result column="currency_number" property="currencyNumber" jdbcType="DECIMAL" />
+		<result column="freeze_number" property="freezeNumber" jdbcType="DECIMAL" />
+		<result column="wallet_address" property="walletAddress" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		user_id, user_name, phone_number, password, type, status
+	</sql>
+	
+	 <select id="selectByPhoneNumber" resultMap="BaseResultMap" parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from users
+		where phone_number = #{phoneNumber,jdbcType=VARCHAR}
+	</select>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from users
+		where user_id = #{userId,jdbcType=BIGINT}
+	</select>
+
+	<select id="selectUsersByList" resultMap="BaseResultMap"
+		parameterType="com.contactsImprove.entity.api.Users" statementType="CALLABLE">
+		CALL selectByPage(#{queryStr},#{pageNumber,mode=IN,jdbcType=INTEGER},#{pageSize,mode=IN,jdbcType=INTEGER},#{pageTotal,mode=OUT,jdbcType=INTEGER})
+	</select>
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+		delete from users
+		where user_id = #{userId,jdbcType=BIGINT}
+	</delete>
+
+	<insert id="insert" parameterType="com.contactsImprove.entity.api.Users">
+		insert into users (user_id,
+		user_name, phone_number,
+		password, type, status
+		)
+		values
+		(#{userId,jdbcType=BIGINT}, #{userName,jdbcType=VARCHAR},
+		#{phoneNumber,jdbcType=VARCHAR},
+		#{password,jdbcType=VARCHAR},
+		#{type,jdbcType=TINYINT}, #{status,jdbcType=TINYINT}
+		)
+	</insert>
+
+	<insert id="insertSelective" parameterType="com.contactsImprove.entity.api.Users">
+		insert into users
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userId != null">
+				user_id,
+			</if>
+			<if test="userName != null">
+				user_name,
+			</if>
+			<if test="phoneNumber != null">
+				phone_number,
+			</if>
+			<if test="password != null">
+				password,
+			</if>
+			<if test="type != null">
+				type,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userId != null">
+				#{userId,jdbcType=BIGINT},
+			</if>
+			<if test="userName != null">
+				#{userName,jdbcType=VARCHAR},
+			</if>
+			<if test="phoneNumber != null">
+				#{phoneNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				#{password,jdbcType=VARCHAR},
+			</if>
+			<if test="type != null">
+				#{type,jdbcType=TINYINT},
+			</if>
+			<if test="status != null">
+				#{status,jdbcType=TINYINT},
+			</if>
+		</trim>
+	</insert>
+
+	<update id="updateByPrimaryKeySelective" parameterType="com.contactsImprove.entity.api.Users">
+		update users
+		<set>
+			<if test="userName != null">
+				user_name = #{userName,jdbcType=VARCHAR},
+			</if>
+			<if test="phoneNumber != null">
+				phone_number = #{phoneNumber,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				password = #{password,jdbcType=VARCHAR},
+			</if>
+			<if test="type != null">
+				type = #{type,jdbcType=TINYINT},
+			</if>
+			<if test="status != null">
+				status = #{status,jdbcType=TINYINT},
+			</if>
+		</set>
+		where user_id = #{userId,jdbcType=BIGINT}
+	</update>
+
+	<update id="updateByPrimaryKey" parameterType="com.contactsImprove.entity.api.Users">
+		update users
+		set
+		user_name = #{userName,jdbcType=VARCHAR},
+		phone_number =
+		#{phoneNumber,jdbcType=VARCHAR},
+		password =
+		#{password,jdbcType=VARCHAR},
+		type = #{type,jdbcType=TINYINT},
+		status =
+		#{status,jdbcType=TINYINT}
+		where user_id = #{userId,jdbcType=BIGINT}
+	</update>
+</mapper>
